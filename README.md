@@ -10,6 +10,6 @@ E9pass CS is a Flutter application use for make and save special format of pdf a
 
 <p align="center">
   <img src="./images/1.jpg" alt="E9pass Home" width="350" HSPACE="10">
-  <img src="./images/1.jpg" alt="E9pass Home" width="350" HSPACE="10">
+  <img src="./images/2.jpg" alt="E9pass Home" width="350" HSPACE="10">
 </p>
 
