@@ -8,6 +8,7 @@ import 'package:e9pass_cs/widget/customButton.dart';
 import 'package:e9pass_cs/widget/flushbar.dart';
 import 'package:e9pass_cs/widget/textInput.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:e9pass_cs/widget/colors.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +34,7 @@ class _HomePageState extends State<HomePage> {
   bool shareButtonState = false;
   ScrollController _scrollController;
   bool showTitleBar = false;
+  bool gallery = false;
 
   bool validate(BuildContext context) {
     if (arcNumber != null && arcNumber.length > 5) {
@@ -105,10 +107,222 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _getArcImage(double devHeight, double devWidth) {
+    showModalBottomSheet(
+        context: context,
+        builder: (builder){
+          return new Container(
+            height: devHeight * 0.2,
+            width: devWidth,
+            color: Colors.transparent,
+            child: new Container(
+                decoration: new BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: new BorderRadius.only(
+                        topLeft: const Radius.circular(10.0),
+                        topRight: const Radius.circular(10.0))),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        File imageFile = await CamService.getImage(ImageSource.camera);
+                        setState(() {
+                          arcImage = imageFile;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: devWidth * 0.3,
+                        height: devWidth * 0.2,
+                        margin: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: AppColors.linearGradient
+                        ),
+                        child: Column(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.camera, size: 36, color: Colors.white,),
+                              onPressed: () {
+                                
+                              },
+                            ),
+                            Text(
+                              'Camera',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () async {
+                        File imageFile = await CamService.getImage(ImageSource.gallery);
+                        setState(() {
+                          arcImage = imageFile;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: devWidth * 0.3,
+                        height: devWidth * 0.2,
+                        margin: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: AppColors.linearGradient
+                        ),
+                        child: Column(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.image, size: 36, color: Colors.white,),
+                              onPressed: () async {
+                                File imageFile = await CamService.getImage(ImageSource.gallery);
+                                setState(() {
+                                  personImage = imageFile;
+                                });
+                                Navigator.pop(context);
+                              },
+                            ),
+                            Text(
+                              'Gallery',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  ],
+                )
+                ),
+          );
+        }
+    );
+  }
+
+  void _getPersonImage(double devHeight, double devWidth) {
+    showModalBottomSheet(
+        context: context,
+        builder: (builder){
+          return new Container(
+            height: devHeight * 0.2,
+            width: devWidth,
+            color: Colors.transparent,
+            child: new Container(
+                decoration: new BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: new BorderRadius.only(
+                        topLeft: const Radius.circular(10.0),
+                        topRight: const Radius.circular(10.0))),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        File imageFile = await CamService.getImage(ImageSource.camera);
+                        setState(() {
+                          personImage = imageFile;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: devWidth * 0.3,
+                        height: devWidth * 0.2,
+                        margin: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: AppColors.linearGradient
+                        ),
+                        child: Column(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.camera, size: 36, color: Colors.white,),
+                              onPressed: () {
+                                
+                              },
+                            ),
+                            Text(
+                              'Camera',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () async {
+                        File imageFile = await CamService.getImage(ImageSource.gallery);
+                        setState(() {
+                          personImage = imageFile;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: devWidth * 0.3,
+                        height: devWidth * 0.2,
+                        margin: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: AppColors.linearGradient
+                        ),
+                        child: Column(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.image, size: 36, color: Colors.white,),
+                              onPressed: () async {
+                                File imageFile = await CamService.getImage(ImageSource.gallery);
+                                setState(() {
+                                  personImage = imageFile;
+                                });
+                                Navigator.pop(context);
+                              },
+                            ),
+                            Text(
+                              'Gallery',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  ],
+                )
+                ),
+          );
+        }
+    );
+  }
+
+  void statupCheck() async {
+    bool result = await FileService.clearCache();
+    if (result) {
+      print('Startup task Done');
+    } else {
+      print('Startup task Faild!');
+    }
+  }
+
   @override
   void initState() {
     _scrollController = ScrollController();
     _scrollController.addListener(scroollListener);
+    this.statupCheck();
     super.initState();
   }
 
@@ -241,11 +455,8 @@ class _HomePageState extends State<HomePage> {
                     child: KButton(
                       text: 'ARC / Passport',
                       busy: false,
-                      onPressed: () async {
-                        File imageFile = await CamService.getImage();
-                        setState(() {
-                          arcImage = imageFile;
-                        });
+                      onPressed: () {
+                        _getArcImage(devHeight, devWidth);
                       },
                       icon: Icon(
                         Icons.camera,
@@ -320,10 +531,7 @@ class _HomePageState extends State<HomePage> {
                       text: 'Verification Photo',
                       busy: false,
                       onPressed: () async {
-                        File imageFile = await CamService.getImage();
-                        setState(() {
-                          personImage = imageFile;
-                        });
+                        _getPersonImage(devHeight, devWidth);
                       },
                       icon: Icon(
                         Icons.camera,

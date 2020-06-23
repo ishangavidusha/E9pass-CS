@@ -6,6 +6,18 @@ import 'package:permission_handler/permission_handler.dart';
 
 class FileService {
 
+  static Future<bool> clearCache() async {
+    try {
+      Directory documentDirectory = await getApplicationDocumentsDirectory();
+      final dir = Directory(documentDirectory.path);
+      dir.deleteSync(recursive: true);
+      return true;
+    } catch (error) {
+      print(error);
+      return false;
+    }
+  }
+
   static Future<bool> saveImageToDownload(File imageFile, String fileName) async {
     try {
       String folderPath = await _getPath();

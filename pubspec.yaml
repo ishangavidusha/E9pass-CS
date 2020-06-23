@@ -42,6 +42,7 @@ dependencies:
   google_fonts: ^1.1.0
   flutter_barcode_scanner: ^1.0.1
   progress_indicators: ^0.1.5
+  modal_bottom_sheet: ^0.1.6+1
 
 dev_dependencies:
   flutter_test:
