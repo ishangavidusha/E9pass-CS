@@ -8,9 +8,10 @@ class FileService {
 
   static Future<bool> clearCache() async {
     try {
-      Directory documentDirectory = await getApplicationDocumentsDirectory();
-      final dir = Directory(documentDirectory.path);
-      dir.deleteSync(recursive: true);
+      final appDir = await getApplicationDocumentsDirectory();
+      if(appDir.existsSync()){
+        appDir.deleteSync(recursive: true);
+      }
       return true;
     } catch (error) {
       print(error);

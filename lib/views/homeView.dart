@@ -13,6 +13,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:e9pass_cs/widget/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:e9pass_cs/models/sheetModel.dart';
+import 'package:e9pass_cs/repository/sheetService.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -31,7 +33,7 @@ class _HomePageState extends State<HomePage> {
 
   String errorText = ' ';
   bool saveButtonState = false;
-  bool shareButtonState = false;
+  bool sheetButtonState = false;
   ScrollController _scrollController;
   bool showTitleBar = false;
   bool gallery = false;
@@ -47,6 +49,36 @@ class _HomePageState extends State<HomePage> {
         });
         showFloatingFlushbar(context, errorText, false);
         return false;
+      }
+      return true;
+    } else {
+      setState(() {
+        errorText = 'ARC nunmer should be at least 6 digit!';
+      });
+      showFloatingFlushbar(context, errorText, false);
+      return false;
+    }
+  }
+
+  bool sheetValidate(BuildContext context) {
+    if (arcNumber != null && arcNumber.length > 5) {
+      setState(() {
+        errorText = '';
+      });
+      if (name == null || name.length < 1) {
+        setState(() {
+           name = "null";
+        });
+      }
+      if (phoneNumber == null || phoneNumber.length < 1) {
+        setState(() {
+           phoneNumber = "null";
+        });
+      }
+      if (appNumber == null || appNumber.length < 1) {
+        setState(() {
+           appNumber = "null";
+        });
       }
       return true;
     } else {
@@ -112,7 +144,7 @@ class _HomePageState extends State<HomePage> {
         context: context,
         builder: (builder){
           return new Container(
-            height: devHeight * 0.2,
+            height: devHeight * 0.15,
             width: devWidth,
             color: Colors.transparent,
             child: new Container(
@@ -126,80 +158,40 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.max,
                   children: [
-                    GestureDetector(
-                      onTap: () async {
-                        File imageFile = await CamService.getImage(ImageSource.camera);
-                        setState(() {
-                          arcImage = imageFile;
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        width: devWidth * 0.3,
-                        height: devWidth * 0.2,
-                        margin: EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: AppColors.linearGradient
-                        ),
-                        child: Column(
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.camera, size: 36, color: Colors.white,),
-                              onPressed: () {
-                                
-                              },
-                            ),
-                            Text(
-                              'Camera',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white
-                              ),
-                            ),
-                          ],
-                        ),
+                    Container(
+                      width: devWidth * 0.4,
+                      child: KButton(
+                        onPressed: () async {
+                          File imageFile = await CamService.getImage(ImageSource.camera);
+                          setState(() {
+                            arcImage = imageFile;
+                          });
+                          Navigator.pop(context);
+                        },
+                        text: 'Camera',
+                        icon: Icon(Icons.camera, color: Colors.white,),
+                        linearGradient: AppColors.linearGradient,
+                        navigate: false,
+                        busy: false,
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () async {
-                        File imageFile = await CamService.getImage(ImageSource.gallery);
-                        setState(() {
-                          arcImage = imageFile;
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        width: devWidth * 0.3,
-                        height: devWidth * 0.2,
-                        margin: EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: AppColors.linearGradient
-                        ),
-                        child: Column(
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.image, size: 36, color: Colors.white,),
-                              onPressed: () async {
-                                File imageFile = await CamService.getImage(ImageSource.gallery);
-                                setState(() {
-                                  personImage = imageFile;
-                                });
-                                Navigator.pop(context);
-                              },
-                            ),
-                            Text(
-                              'Gallery',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white
-                              ),
-                            ),
-                          ],
-                        ),
+                    Container(
+                      width: devWidth * 0.4,
+                      child: KButton(
+                        onPressed: () async {
+                          File imageFile = await CamService.getImage(ImageSource.gallery);
+                          setState(() {
+                            arcImage = imageFile;
+                          });
+                          Navigator.pop(context);
+                        },
+                        text: 'Gallery',
+                        icon: Icon(Icons.image, color: Colors.white,),
+                        linearGradient: AppColors.linearGradient,
+                        navigate: false,
+                        busy: false,
                       ),
-                    )
+                    ),
                   ],
                 )
                 ),
@@ -213,7 +205,7 @@ class _HomePageState extends State<HomePage> {
         context: context,
         builder: (builder){
           return new Container(
-            height: devHeight * 0.2,
+            height: devHeight * 0.15,
             width: devWidth,
             color: Colors.transparent,
             child: new Container(
@@ -227,80 +219,40 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.max,
                   children: [
-                    GestureDetector(
-                      onTap: () async {
-                        File imageFile = await CamService.getImage(ImageSource.camera);
-                        setState(() {
-                          personImage = imageFile;
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        width: devWidth * 0.3,
-                        height: devWidth * 0.2,
-                        margin: EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: AppColors.linearGradient
-                        ),
-                        child: Column(
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.camera, size: 36, color: Colors.white,),
-                              onPressed: () {
-                                
-                              },
-                            ),
-                            Text(
-                              'Camera',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white
-                              ),
-                            ),
-                          ],
-                        ),
+                    Container(
+                      width: devWidth * 0.4,
+                      child: KButton(
+                        onPressed: () async {
+                          File imageFile = await CamService.getImage(ImageSource.camera);
+                          setState(() {
+                            personImage = imageFile;
+                          });
+                          Navigator.pop(context);
+                        },
+                        text: 'Camera',
+                        icon: Icon(Icons.camera, color: Colors.white,),
+                        linearGradient: AppColors.linearGradient,
+                        navigate: false,
+                        busy: false,
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () async {
-                        File imageFile = await CamService.getImage(ImageSource.gallery);
-                        setState(() {
-                          personImage = imageFile;
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        width: devWidth * 0.3,
-                        height: devWidth * 0.2,
-                        margin: EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: AppColors.linearGradient
-                        ),
-                        child: Column(
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.image, size: 36, color: Colors.white,),
-                              onPressed: () async {
-                                File imageFile = await CamService.getImage(ImageSource.gallery);
-                                setState(() {
-                                  personImage = imageFile;
-                                });
-                                Navigator.pop(context);
-                              },
-                            ),
-                            Text(
-                              'Gallery',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white
-                              ),
-                            ),
-                          ],
-                        ),
+                    Container(
+                      width: devWidth * 0.4,
+                      child: KButton(
+                        onPressed: () async {
+                          File imageFile = await CamService.getImage(ImageSource.gallery);
+                          setState(() {
+                            personImage = imageFile;
+                          });
+                          Navigator.pop(context);
+                        },
+                        text: 'Gallery',
+                        icon: Icon(Icons.image, color: Colors.white,),
+                        linearGradient: AppColors.linearGradient,
+                        navigate: false,
+                        busy: false,
                       ),
-                    )
+                    ),
                   ],
                 )
                 ),
@@ -670,35 +622,35 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                   ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  KButton(
-                    text: 'View PDF',
-                    busy: false,
-                    onPressed: () async {
-                      //On View
-                      String path = await viewPdfFileFromMemory(context);
-                      if (path != null && path.length > 0) {
-                        Navigator.push(
-                          context,
-                          AwesomePageRoute(
-                              transitionDuration: Duration(milliseconds: 300),
-                              exitPage: widget,
-                              enterPage: PdfView(
-                                path: path,
-                              ),
-                              transition: ParallaxTransition()));
-                      }
-                    },
-                    icon: Icon(
-                      Icons.panorama_fish_eye,
-                      color: Colors.white,
-                    ),
-                    linearGradient: LinearGradient(
-                        colors: [Color(0xFF1D73FF), Color(0xFF438AFE)]),
-                    navigate: false,
-                  ),
+                  // SizedBox(
+                  //   height: 10,
+                  // ),
+                  // KButton(
+                  //   text: 'View PDF',
+                  //   busy: false,
+                  //   onPressed: () async {
+                  //     //On View
+                  //     String path = await viewPdfFileFromMemory(context);
+                  //     if (path != null && path.length > 0) {
+                  //       Navigator.push(
+                  //         context,
+                  //         AwesomePageRoute(
+                  //             transitionDuration: Duration(milliseconds: 300),
+                  //             exitPage: widget,
+                  //             enterPage: PdfView(
+                  //               path: path,
+                  //             ),
+                  //             transition: ParallaxTransition()));
+                  //     }
+                  //   },
+                  //   icon: Icon(
+                  //     Icons.panorama_fish_eye,
+                  //     color: Colors.white,
+                  //   ),
+                  //   linearGradient: LinearGradient(
+                  //       colors: [Color(0xFF1D73FF), Color(0xFF438AFE)]),
+                  //   navigate: false,
+                  // ),
                   SizedBox(
                     height: 10,
                   ),
@@ -741,22 +693,54 @@ class _HomePageState extends State<HomePage> {
                         colors: [Color(0xFF1D73FF), Color(0xFF438AFE)]),
                     navigate: false,
                   ),
-                  // SizedBox(
-                  //   height: 10,
-                  // ),
-                  // KButton(
-                  //   text: 'Share to',
-                  //   onPressed: () async {
-                  //     String path = await viewPdfFileFromMemory(context);
-                  //   },
-                  //   icon: Icon(
-                  //     Icons.share,
-                  //     color: Colors.white,
-                  //   ),
-                  //   linearGradient: LinearGradient(
-                  //       colors: [Color(0xFF1D73FF), Color(0xFF438AFE)]),
-                  //   navigate: false,
-                  // ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  KButton(
+                    text: 'Sheet Upload',
+                    busy: sheetButtonState,
+                    onPressed: () async {
+                      if (sheetValidate(context)) {
+                        setState(() {
+                          sheetButtonState = true;
+                        });
+                        SheetModel sheetModel = SheetModel(
+                          name: name,
+                          applicationNumber: appNumber,
+                          phoneNumber: phoneNumber,
+                          arcNumber: arcNumber,
+                        );
+
+                        SheetService sheeService = SheetService(
+                          (String response){
+                            print(response);
+                            if(response == SheetService.STATUS_SUCCESS){
+                              showFloatingFlushbar(context, 'Done', true);
+                              setState(() {
+                                sheetButtonState = false;
+                              });
+                            } else {
+                              print(response);
+                              showFloatingFlushbar(context, 'Failed', false);
+                              setState(() {
+                                sheetButtonState = false;
+                              });
+                            }
+                          }
+                        );
+
+                        sheeService.submitData(sheetModel);
+
+                      } 
+                    },
+                    icon: Icon(
+                      Icons.cloud_upload,
+                      color: Colors.white,
+                    ),
+                    linearGradient: LinearGradient(
+                        colors: [Color(0xFF1D73FF), Color(0xFF438AFE)]),
+                    navigate: false,
+                  ),
                   SizedBox(
                     height: 20,
                   ),
