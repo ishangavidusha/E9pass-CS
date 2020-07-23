@@ -1,61 +1,63 @@
+import 'package:e9pass_cs/widget/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:progress_indicators/progress_indicators.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class KButton extends StatelessWidget {
   final String text;
   final Function onPressed;
   final LinearGradient linearGradient;
   final Icon icon;
-  final bool navigate;
-  final bool busy;
 
-  const KButton({Key key, this.text, this.onPressed, this.linearGradient, this.icon, this.navigate, this.busy}) : super(key: key);
+  const KButton(
+      {Key key,
+      this.text,
+      this.onPressed,
+      this.linearGradient,
+      this.icon,})
+      : super(key: key);
   @override
   Widget build(BuildContext context) {
+    double devWidth = MediaQuery.of(context).size.width;
     return Container(
+      width: devWidth * 0.8,
       height: 50.0,
-      child: RaisedButton(
-        onPressed: onPressed,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(80.0)),
-        padding: EdgeInsets.all(0.0),
-        child: Ink(
-          decoration: BoxDecoration(
-              gradient: linearGradient,
-              borderRadius: BorderRadius.circular(30.0)),
-          child: Container(
-            constraints: BoxConstraints(maxWidth: 300.0, minHeight: 50.0),
-            alignment: Alignment.center,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  child: icon,
-                ),
-                !busy ? Text(
-                  text,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white),
-                ) : Center(
-                  child: ScalingText(
-                    'Loading...',
-                    style: TextStyle(
-                      color: Colors.white
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(40),
+        gradient: AppColors.linearGradient, 
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey[500],
+            offset: Offset(0.0, 1.5),
+            blurRadius: 1.5,
+          ),
+        ]
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+            onTap: onPressed,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  icon,
+                  Text(
+                    text,
+                    style: GoogleFonts.roboto(
+                      textStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
-                Opacity(
-                  opacity: 0.0,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    child: icon,
+                  SizedBox(
+                    width: 20,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
       ),
     );
   }

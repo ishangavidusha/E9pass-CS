@@ -11,5 +11,5 @@ class SheetModel {
     this.arcNumber
   });
   
-  String toParams() => "?name=$name&appNo=$applicationNumber&phNo=$phoneNumber&arcNo=$arcNumber";
+  String toParams() => "?name=$name&appNumber=$applicationNumber&phoneNumber=$phoneNumber&arcNumber=$arcNumber";
 }

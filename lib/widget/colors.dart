@@ -5,4 +5,5 @@ class AppColors {
   static final mainTextColor = Color(0xFF313233);
   static final secoundTextColor = Color(0xFF454647);
   static final linearGradient = LinearGradient(colors: [Color(0xFF1D73FF),Color(0xFF438AFE)]);
+  static final buttonShadowColor = Color(0xFF1D73FF);
 }

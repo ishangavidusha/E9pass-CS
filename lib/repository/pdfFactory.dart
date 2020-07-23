@@ -5,12 +5,12 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class PdfFactory {
-  static pw.Document pdf;
-  static PdfImage arcPdfImage;
-  static PdfImage personPdfImage;
+  pw.Document pdf;
+  PdfImage arcPdfImage;
+  PdfImage personPdfImage;
 
 
-  static Future<pw.Document> getPdfFile(File arcImage, File personImage, String name, String arcNumber, String phoneNumber, String appNumber) async {
+  Future<pw.Document> getPdfFile(File arcImage, File personImage, String name, String arcNumber, String phoneNumber, String appNumber) async {
       
     pdf = pw.Document();
     var data = await rootBundle.load("assets/fonts/OpenSans-SemiBold.ttf");
@@ -56,7 +56,7 @@ class PdfFactory {
                                   style: pw.TextStyle(
                                       fontSize: 20,
                                       font: myFont,
-                                      fontWeight: pw.FontWeight.bold)),
+                                      fontWeight: pw.FontWeight.bold,),),
                               pw.SizedBox(
                                 height: 5,
                               ),
@@ -64,15 +64,15 @@ class PdfFactory {
                                   style: pw.TextStyle(
                                       fontSize: 18,
                                       font: myFont,
-                                      fontWeight: pw.FontWeight.bold)),
+                                      fontWeight: pw.FontWeight.bold,),),
                               pw.SizedBox(
                                 height: 5,
                               ),
                               pw.Text('APP NO : ' + appNumber,
                                   style: pw.TextStyle(
                                     fontSize: 16,
-                                    font: myFont
-                                  )),
+                                    font: myFont,
+                                  ),),
                               pw.SizedBox(
                                 height: 5,
                               ),
@@ -85,18 +85,18 @@ class PdfFactory {
                                     pw.Text('ARC NO : ' + arcNumber,
                                         style: pw.TextStyle(
                                           fontSize: 16,
-                                          font: myFont
-                                        )),
+                                          font: myFont,
+                                        ),),
                                     pw.SizedBox(
                                       width: 20,
                                     ),
                                     pw.Text('PH : ' + phoneNumber,
                                         style: pw.TextStyle(
                                           fontSize: 16,
-                                          font: myFont
-                                        )),
-                                  ]),
-                            ]))),
+                                          font: myFont,
+                                        ),),
+                                  ],),
+                            ],),),),
                 pw.Flexible(
                   child: arcPdfImage != null
                       ? pw.Container(
@@ -115,8 +115,8 @@ class PdfFactory {
                       : pw.Container(),
                 ),
                 pw.SizedBox(height: 20),
-              ]);
-        }));
+              ],);
+        },),);
     return pdf;
   }
 }

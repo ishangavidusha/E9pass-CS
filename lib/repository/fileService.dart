@@ -5,11 +5,10 @@ import 'package:ext_storage/ext_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class FileService {
-
-  static Future<bool> clearCache() async {
+  Future<bool> clearCache() async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
-      if(appDir.existsSync()){
+      if (appDir.existsSync()) {
         appDir.deleteSync(recursive: true);
       }
       return true;
@@ -19,7 +18,7 @@ class FileService {
     }
   }
 
-  static Future<bool> saveImageToDownload(File imageFile, String fileName) async {
+  Future<bool> saveImageToDownload(File imageFile, String fileName) async {
     try {
       String folderPath = await _getPath();
       File file = File("$folderPath/$fileName.jpg");
@@ -28,12 +27,11 @@ class FileService {
       }
       return true;
     } catch (error) {
-      print(error);
-      return false;
+      throw error;
     }
   }
 
-  static Future<bool> savePdfLocale(pw.Document pdfFile, String fileName) async {
+  Future<bool> savePdfLocale(pw.Document pdfFile, String fileName) async {
     try {
       String pdfPath = await _getPath();
       File file = File("$pdfPath/$fileName.pdf");
@@ -42,12 +40,11 @@ class FileService {
       }
       return true;
     } catch (error) {
-      print(error);
-      return false;
+      throw error;
     }
   }
 
-  static Future<String> savePdfForView(pw.Document pdfFile, String fileName) async {
+  Future<String> savePdfForView(pw.Document pdfFile, String fileName) async {
     Directory documentDirectory = await getApplicationDocumentsDirectory();
     String docPath = documentDirectory.path;
     File file = File("$docPath/$fileName.pdf");
@@ -55,8 +52,9 @@ class FileService {
     return "$docPath/$fileName.pdf";
   }
 
-  static Future<String> _getPath() {
+  Future<String> _getPath() {
     return ExtStorage.getExternalStoragePublicDirectory(
-        ExtStorage.DIRECTORY_DOWNLOADS);
+      ExtStorage.DIRECTORY_DOWNLOADS,
+    );
   }
 }

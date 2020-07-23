@@ -1,20 +1,21 @@
 import 'dart:io';
-import 'package:awesome_page_transitions/awesome_page_transitions.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:e9pass_cs/models/appSettings.dart';
+import 'package:e9pass_cs/models/sheetModel.dart';
 import 'package:e9pass_cs/repository/cameraService.dart';
 import 'package:e9pass_cs/repository/fileService.dart';
 import 'package:e9pass_cs/repository/pdfFactory.dart';
-import 'package:e9pass_cs/views/pdfView.dart';
+import 'package:e9pass_cs/repository/sheetService.dart';
+import 'package:e9pass_cs/state/settingsProvider.dart';
+import 'package:e9pass_cs/views/settingsView.dart';
 import 'package:e9pass_cs/widget/customButton.dart';
-import 'package:e9pass_cs/widget/flushbar.dart';
-import 'package:e9pass_cs/widget/textInput.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:e9pass_cs/widget/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:e9pass_cs/models/sheetModel.dart';
-import 'package:e9pass_cs/repository/sheetService.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -22,259 +23,85 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
-  pw.Document pdfFile;
-  File  arcImage;
-  File  personImage;
-  String  name;
-  String  arcNumber;
-  String  phoneNumber;
-  String  appNumber;
-
-  String errorText = ' ';
-  bool saveButtonState = false;
-  bool sheetButtonState = false;
   ScrollController _scrollController;
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  CamService _camService = CamService();
+  PdfFactory _pdfFactory = PdfFactory();
+  FileService _fileService = FileService();
+  SheetService _sheetService = SheetService();
   bool showTitleBar = false;
-  bool gallery = false;
+  pw.Document pdf;
+  File arcImage;
+  File personImage;
+  String appNumber;
+  String name;
+  String arcNumber;
+  String phoneNumber;
+  bool saving = false;
+  SettingsProvider settingsProvider;
+  SettingsProvider mySettingsProvider;
+  AppSettings appSettings;
+  bool isSwitched;
 
-  bool validate(BuildContext context) {
-    if (arcNumber != null && arcNumber.length > 5) {
-      setState(() {
-        errorText = '';
-      });
-      if (arcImage == null && personImage == null) {
-        setState(() {
-          errorText = 'At least one photo should be included!';
-        });
-        showFloatingFlushbar(context, errorText, false);
+  Future<Map<String, dynamic>> savePdfAndPhotos() async {
+    try {
+      pdf = await _pdfFactory.getPdfFile(arcImage, personImage, name, arcNumber, phoneNumber, appNumber);
+      bool result = await _fileService.savePdfLocale(pdf, appNumber);
+      if (!result) {
+        return {"state" : false, "msg" : 'Error occurred during Saving PDF'};
+      }
+      if (arcImage != null) {
+        await _fileService.saveImageToDownload(arcImage, '$appNumber-ARC');
+      }
+      if (personImage != null) {
+        await _fileService.saveImageToDownload(personImage, '$appNumber-Person');
+      }
+      return {"state" : true, "msg" : 'Done'};
+    } catch (error) {
+      return {"state" : false, "msg" : error};
+    }
+  }
+
+  Future<bool> sheetUpload(String sheetUrl) async {
+    SheetModel sheetModel = SheetModel(
+      name: name ?? 'null',
+      applicationNumber: appNumber ?? 'null',
+      arcNumber: arcNumber ?? 'null',
+      phoneNumber: phoneNumber ?? 'null'
+    );
+    try {
+      String result = await _sheetService.submitData(sheetModel, sheetUrl);
+      if (result == "SUCCESS") {
+        return true;
+      } else {
         return false;
       }
-      return true;
-    } else {
-      setState(() {
-        errorText = 'ARC nunmer should be at least 6 digit!';
-      });
-      showFloatingFlushbar(context, errorText, false);
-      return false;
+    } catch (error) {
+      print(error);
     }
-  }
+    return false;
+  } 
 
-  bool sheetValidate(BuildContext context) {
-    if (arcNumber != null && arcNumber.length > 5) {
-      setState(() {
-        errorText = '';
-      });
-      if (name == null || name.length < 1) {
-        setState(() {
-           name = "null";
-        });
-      }
-      if (phoneNumber == null || phoneNumber.length < 1) {
-        setState(() {
-           phoneNumber = "null";
-        });
-      }
-      if (appNumber == null || appNumber.length < 1) {
-        setState(() {
-           appNumber = "null";
-        });
-      }
-      return true;
-    } else {
-      setState(() {
-        errorText = 'ARC nunmer should be at least 6 digit!';
-      });
-      showFloatingFlushbar(context, errorText, false);
-      return false;
-    }
-  }
-
-  Future<String> viewPdfFileFromMemory(BuildContext context) async {
-    if (validate(context)) {
-      pdfFile = await PdfFactory.getPdfFile(
-        arcImage, 
-        personImage, 
-        name, 
-        arcNumber, 
-        phoneNumber, 
-        appNumber
-      );
-      return await FileService.savePdfForView(pdfFile, arcNumber);
-    }
-    return null;
-  }
-
-  Future<bool> savePdfFileToPath(BuildContext context) async {
-    if (validate(context)) {
-      pdfFile = await PdfFactory.getPdfFile(
-        arcImage, 
-        personImage, 
-        name, 
-        arcNumber, 
-        phoneNumber, 
-        appNumber
-      );
-      String fileName = arcNumber;
-      if (appNumber != null && appNumber.length > 0){
-        fileName = '$arcNumber-$appNumber';
-      }
-      return await FileService.savePdfLocale(pdfFile, fileName);
-    } else {
-      setState(() {
-        saveButtonState = false;
-      });
-      return false;
-    }
-  }
-
-  Future<String> getQrResult() async {
-    // String cameraScanResult = await scanner.scan();
-    String cameraScanResult = await FlutterBarcodeScanner.scanBarcode(
-        "#ff6666", "Cancel", true, ScanMode.QR);
-    if (cameraScanResult != null && cameraScanResult.length > 0) {
-      return cameraScanResult;
-    } else {
-      return null;
-    }
-  }
-
-  void _getArcImage(double devHeight, double devWidth) {
-    showModalBottomSheet(
-        context: context,
-        builder: (builder){
-          return new Container(
-            height: devHeight * 0.15,
-            width: devWidth,
-            color: Colors.transparent,
-            child: new Container(
-                decoration: new BoxDecoration(
-                    color: Colors.black38,
-                    borderRadius: new BorderRadius.only(
-                        topLeft: const Radius.circular(10.0),
-                        topRight: const Radius.circular(10.0))),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Container(
-                      width: devWidth * 0.4,
-                      child: KButton(
-                        onPressed: () async {
-                          File imageFile = await CamService.getImage(ImageSource.camera);
-                          setState(() {
-                            arcImage = imageFile;
-                          });
-                          Navigator.pop(context);
-                        },
-                        text: 'Camera',
-                        icon: Icon(Icons.camera, color: Colors.white,),
-                        linearGradient: AppColors.linearGradient,
-                        navigate: false,
-                        busy: false,
-                      ),
-                    ),
-                    Container(
-                      width: devWidth * 0.4,
-                      child: KButton(
-                        onPressed: () async {
-                          File imageFile = await CamService.getImage(ImageSource.gallery);
-                          setState(() {
-                            arcImage = imageFile;
-                          });
-                          Navigator.pop(context);
-                        },
-                        text: 'Gallery',
-                        icon: Icon(Icons.image, color: Colors.white,),
-                        linearGradient: AppColors.linearGradient,
-                        navigate: false,
-                        busy: false,
-                      ),
-                    ),
-                  ],
-                )
-                ),
-          );
-        }
-    );
-  }
-
-  void _getPersonImage(double devHeight, double devWidth) {
-    showModalBottomSheet(
-        context: context,
-        builder: (builder){
-          return new Container(
-            height: devHeight * 0.15,
-            width: devWidth,
-            color: Colors.transparent,
-            child: new Container(
-                decoration: new BoxDecoration(
-                    color: Colors.black38,
-                    borderRadius: new BorderRadius.only(
-                        topLeft: const Radius.circular(10.0),
-                        topRight: const Radius.circular(10.0))),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Container(
-                      width: devWidth * 0.4,
-                      child: KButton(
-                        onPressed: () async {
-                          File imageFile = await CamService.getImage(ImageSource.camera);
-                          setState(() {
-                            personImage = imageFile;
-                          });
-                          Navigator.pop(context);
-                        },
-                        text: 'Camera',
-                        icon: Icon(Icons.camera, color: Colors.white,),
-                        linearGradient: AppColors.linearGradient,
-                        navigate: false,
-                        busy: false,
-                      ),
-                    ),
-                    Container(
-                      width: devWidth * 0.4,
-                      child: KButton(
-                        onPressed: () async {
-                          File imageFile = await CamService.getImage(ImageSource.gallery);
-                          setState(() {
-                            personImage = imageFile;
-                          });
-                          Navigator.pop(context);
-                        },
-                        text: 'Gallery',
-                        icon: Icon(Icons.image, color: Colors.white,),
-                        linearGradient: AppColors.linearGradient,
-                        navigate: false,
-                        busy: false,
-                      ),
-                    ),
-                  ],
-                )
-                ),
-          );
-        }
-    );
-  }
-
-  void statupCheck() async {
-    bool result = await FileService.clearCache();
-    if (result) {
-      print('Startup task Done');
-    } else {
-      print('Startup task Faild!');
-    }
+  void resetData() {
+    setState(() {
+      _formKey.currentState.reset();
+      pdf = null;
+      arcImage = null;
+      personImage = null;
+      appNumber = null;
+      name = null;
+      arcNumber = null;
+      phoneNumber = null;
+    });
   }
 
   @override
   void initState() {
     _scrollController = ScrollController();
     _scrollController.addListener(scroollListener);
-    this.statupCheck();
+    settingsProvider ??= Provider.of<SettingsProvider>(context, listen: false);
+    settingsProvider.getSettings('settings');
     super.initState();
   }
 
@@ -303,7 +130,10 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     double devWidth = MediaQuery.of(context).size.width;
     double devHeight = MediaQuery.of(context).size.height;
+    mySettingsProvider = Provider.of<SettingsProvider>(context);
+    isSwitched = settingsProvider.appSettings?.upload == null ? false : settingsProvider.appSettings.upload;
     return Scaffold(
+      key: _scaffoldKey,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -314,462 +144,499 @@ class _HomePageState extends State<HomePage> {
               color: AppColors.backgroundColor,
             ),
           ),
-          ScrollConfiguration(
-            behavior: ScrollBehavior()
-              ..buildViewportChrome(context, null, AxisDirection.down),
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                        gradient: AppColors.linearGradient,
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(20),
-                          bottomRight: Radius.circular(20),
-                        )),
-                    width: devWidth,
-                    height: devHeight * 0.15,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text('E9pass Register',
-                            style: GoogleFonts.roboto(
-                                textStyle: TextStyle(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white)))
-                      ],
+          SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              children: [
+                Container(
+                  alignment: Alignment.bottomCenter,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
                     ),
                   ),
-                  Container(
-                    width: devWidth,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text('ARC / Passport Photo',
-                            style: GoogleFonts.roboto(
-                                textStyle: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.mainTextColor))),
-                        GestureDetector(
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.linearGradient,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text('Clear',
-                                style: GoogleFonts.roboto(
-                                    textStyle: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white))),
-                          ),
-                          onTap: () {
-                            setState(() {
-                              arcImage = null;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    height: 200,
-                    width: devWidth * 0.8,
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        color: Colors.black12,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: arcImage == null
-                        ? Center(
-                            child: Image.asset(
-                            'assets/images/id-card.png',
-                            fit: BoxFit.contain,
-                          ))
-                        : ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.file(
-                              arcImage,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: KButton(
-                      text: 'ARC / Passport',
-                      busy: false,
-                      onPressed: () {
-                        _getArcImage(devHeight, devWidth);
-                      },
-                      icon: Icon(
-                        Icons.camera,
-                        color: Colors.white,
-                      ),
-                      linearGradient: LinearGradient(
-                          colors: [Color(0xFF1D73FF), Color(0xFF438AFE)]),
-                      navigate: false,
-                    ),
-                  ),
-                  Container(
-                    width: devWidth,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text('Person\'s Verification Photo',
-                            style: GoogleFonts.roboto(
-                                textStyle: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.mainTextColor))),
-                        GestureDetector(
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.linearGradient,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text('Clear',
-                                style: GoogleFonts.roboto(
-                                    textStyle: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white))),
-                          ),
-                          onTap: () {
-                            setState(() {
-                              personImage = null;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    height: 200,
-                    width: devWidth * 0.8,
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        color: Colors.black12,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: personImage == null
-                        ? Center(
-                            child: Image.asset(
-                            'assets/images/login.png',
-                            fit: BoxFit.contain,
-                          ))
-                        : ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.file(
-                              personImage,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: KButton(
-                      text: 'Verification Photo',
-                      busy: false,
-                      onPressed: () async {
-                        _getPersonImage(devHeight, devWidth);
-                      },
-                      icon: Icon(
-                        Icons.camera,
-                        color: Colors.white,
-                      ),
-                      linearGradient: LinearGradient(
-                          colors: [Color(0xFF1D73FF), Color(0xFF438AFE)]),
-                      navigate: false,
-                    ),
-                  ),
-                  Container(
-                    width: devWidth,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text('Application Number',
-                            style: GoogleFonts.roboto(
-                                textStyle: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.mainTextColor))),
-                        GestureDetector(
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.linearGradient,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text('Clear',
-                                style: GoogleFonts.roboto(
-                                    textStyle: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white))),
-                          ),
-                          onTap: () {
-                            setState(() {
-                              appNumber = ' ';
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    height: 100,
-                    width: devWidth * 0.8,
-                    padding: EdgeInsets.all(10),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                        color: Colors.black12,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Text(
-                      appNumber != null ? appNumber : ' ',
-                      style: GoogleFonts.roboto(
+                  width: devWidth,
+                  height: devHeight * 0.15,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'E9pass Customer Service',
+                        style: GoogleFonts.roboto(
                           textStyle: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.mainTextColor)),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: KButton(
-                      text: 'Scan Application Number',
-                      busy: false,
-                      onPressed: () async {
-                        String result = await getQrResult();
-                        if (result != null && result.length > 12) {
-                          setState(() {
-                            appNumber = result;
-                          });
-                        }
-                      },
-                      icon: Icon(
-                        Icons.scanner,
-                        color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.mainTextColor,
+                          ),
+                        ),
                       ),
-                      linearGradient: LinearGradient(
-                          colors: [Color(0xFF1D73FF), Color(0xFF438AFE)]),
-                      navigate: false,
+                      IconButton(
+                        padding: EdgeInsets.all(0),
+                        icon: Icon(Icons.settings),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => SettingsView()),
+                          );
+                        },
+                      )
+                    ],
+                  ),
+                ),
+                Container(
+                  width: devWidth,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'ARC / Passport Photo',
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.mainTextColor,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.linearGradient,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            'Clear',
+                            style: GoogleFonts.roboto(
+                              textStyle: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            arcImage = null;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  height: 200,
+                  width: devWidth * 0.8,
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: arcImage != null ? ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.file(
+                        arcImage,
+                        fit: BoxFit.contain,
+                      ),
+                    ) : Center(
+                    child: Image.asset(
+                      'assets/images/id-card.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  Container(
-                    width: devWidth,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text('Personal Information',
-                            style: GoogleFonts.roboto(
-                                textStyle: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.mainTextColor))),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                  child: KButton(
+                    text: 'ARC / Passport',
+                    onPressed: () {
+                      getArcImage(devHeight, devWidth);
+                    },
+                    icon: Icon(
+                      Icons.camera,
+                      color: Colors.white,
+                    ),
+                    linearGradient: LinearGradient(
+                      colors: [
+                        Color(0xFF1D73FF),
+                        Color(0xFF438AFE),
                       ],
                     ),
                   ),
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                    child: KTextInput(
-                      lable: 'Name',
-                      textInputType: TextInputType.text,
-                      onSubmit: (text) {
-                        setState(() {
-                          name = text;
-                        });
-                      },
+                ),
+                Container(
+                  width: devWidth,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Person\'s Verification Photo',
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.mainTextColor,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        child: Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.linearGradient,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            'Clear',
+                            style: GoogleFonts.roboto(
+                              textStyle: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            personImage = null;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  height: 200,
+                  width: devWidth * 0.8,
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: personImage != null ? ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.file(
+                        personImage,
+                        fit: BoxFit.contain,
+                      ),
+                    ) : Center(
+                    child: Image.asset(
+                      'assets/images/login.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                    child: KTextInput(
-                      lable: 'ARC Number',
-                      textInputType: TextInputType.number,
-                      onSubmit: (text) {
-                        setState(() {
-                          arcNumber = text;
-                        });
-                      },
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                  child: KButton(
+                    text: 'Verification Photo',
+                    onPressed: () {
+                      getPersonImage(devHeight, devWidth);
+                    },
+                    icon: Icon(
+                      Icons.camera,
+                      color: Colors.white,
+                    ),
+                    linearGradient: LinearGradient(
+                      colors: [
+                        Color(0xFF1D73FF),
+                        Color(0xFF438AFE),
+                      ],
                     ),
                   ),
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                    child: KTextInput(
-                      lable: 'Phone Number',
-                      textInputType: TextInputType.number,
-                      onSubmit: (text) {
-                        setState(() {
-                          phoneNumber = text;
-                        });
-                      },
+                ),
+                Container(
+                  width: devWidth,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Application Number',
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.mainTextColor,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        child: Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.linearGradient,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            'Clear',
+                            style: GoogleFonts.roboto(
+                              textStyle: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            appNumber = null;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  height: 100,
+                  width: devWidth * 0.8,
+                  padding: EdgeInsets.all(10),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Text(
+                    appNumber != null ? appNumber : 'Application Number',
+                    style: GoogleFonts.roboto(
+                      textStyle: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.mainTextColor,
+                      ),
                     ),
                   ),
-                  // SizedBox(
-                  //   height: 10,
-                  // ),
-                  // KButton(
-                  //   text: 'View PDF',
-                  //   busy: false,
-                  //   onPressed: () async {
-                  //     //On View
-                  //     String path = await viewPdfFileFromMemory(context);
-                  //     if (path != null && path.length > 0) {
-                  //       Navigator.push(
-                  //         context,
-                  //         AwesomePageRoute(
-                  //             transitionDuration: Duration(milliseconds: 300),
-                  //             exitPage: widget,
-                  //             enterPage: PdfView(
-                  //               path: path,
-                  //             ),
-                  //             transition: ParallaxTransition()));
-                  //     }
-                  //   },
-                  //   icon: Icon(
-                  //     Icons.panorama_fish_eye,
-                  //     color: Colors.white,
-                  //   ),
-                  //   linearGradient: LinearGradient(
-                  //       colors: [Color(0xFF1D73FF), Color(0xFF438AFE)]),
-                  //   navigate: false,
-                  // ),
-                  SizedBox(
-                    height: 10,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                  child: KButton(
+                    text: 'Scan Application Number',
+                    onPressed: () {
+                      getQrResult();
+                    },
+                    icon: Icon(
+                      Icons.scanner,
+                      color: Colors.white,
+                    ),
+                    linearGradient: LinearGradient(
+                      colors: [
+                        Color(0xFF1D73FF),
+                        Color(0xFF438AFE),
+                      ],
+                    ),
                   ),
-                  KButton(
+                ),
+                Container(
+                  width: devWidth,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Personal Information',
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.mainTextColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        child: nameInput(),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        child: arcNumberInput(),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        child: phoneNumberInput(),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  child: KButton(
                     text: 'Save PDF & Photos',
-                    busy: saveButtonState,
                     onPressed: () async {
-                      //On Save
-                      setState(() {
-                        saveButtonState = true;
-                      });
-                      bool result = await savePdfFileToPath(context);
-                      if (arcImage != null && result) {
-                        String fileName = arcNumber;
-                        if (appNumber != null && appNumber.length > 0){
-                          fileName = '$arcNumber-$appNumber';
+                      if (_formKey.currentState.validate()) {
+                        _formKey.currentState.save();
+                        if (appNumber != null && appNumber.length > 0) {
+                          if (arcImage != null || personImage != null) {
+                            Map<String, dynamic> pdfResult;
+                            setState(() {
+                              saving = true;
+                            });
+                            if (isSwitched) {
+                              appSettings = await settingsProvider.getSettings('settings');
+                              if (appSettings.sheetUrl != null && appSettings.sheetUrl.length > 0){
+                                bool result = await sheetUpload(appSettings.sheetUrl);
+                                if (result){
+                                  pdfResult = await savePdfAndPhotos();
+                                } else {
+                                  pdfResult = await savePdfAndPhotos();
+                                  SnackBar snackBar = SnackBar(
+                                    content: Text('Failed to upload sheet data!'),
+                                    duration: Duration(seconds: 3),
+                                  );
+                                  _scaffoldKey.currentState.showSnackBar(snackBar);
+                                }
+                              } else {
+                                pdfResult = await savePdfAndPhotos();
+                              }
+                            } else {
+                              pdfResult = await savePdfAndPhotos();
+                            }
+                            setState(() {
+                              saving = false;
+                            });
+                            if (pdfResult['state'] == true) {
+                              AwesomeDialog(
+                                context: context,
+                                dialogType: DialogType.SUCCES,
+                                animType: AnimType.BOTTOMSLIDE,
+                                title: 'Succes',
+                                desc: 'PDF & Photos successfully saved',
+                                btnOkText: 'Clear',
+                                btnOkOnPress: () {
+                                  resetData();
+                                },
+                                btnCancelText: 'Cancel',
+                                btnCancelOnPress: () {
+
+                                },
+                                onDissmissCallback: () {
+
+                                }
+                              )..show();
+                            } else {
+                              AwesomeDialog(
+                                context: context,
+                                dialogType: DialogType.ERROR,
+                                animType: AnimType.BOTTOMSLIDE,
+                                title: 'Failed',
+                                desc: pdfResult['msg'],
+                                btnCancelText: 'Cancel',
+                                btnCancelOnPress: () {
+
+                                },
+                                onDissmissCallback: () {
+
+                                }
+                              )..show();
+                            }
+                          } else {
+                            AwesomeDialog(
+                              context: context,
+                              dialogType: DialogType.ERROR,
+                              animType: AnimType.BOTTOMSLIDE,
+                              title: 'Error',
+                              desc: 'At least one photo should be included',
+                              btnOkText: 'OK',
+                              btnOkOnPress: () {
+
+                              },
+                              onDissmissCallback: () {
+
+                              }
+                            )..show();
+                          }
+                        } else {
+                          AwesomeDialog(
+                            context: context,
+                            dialogType: DialogType.ERROR,
+                            animType: AnimType.BOTTOMSLIDE,
+                            title: 'Error',
+                            desc: 'Pleace scan the application number',
+                            btnOkText: 'Scan Now',
+                            btnOkOnPress: () {
+                              getQrResult();
+                            },
+                            btnCancelText: 'Cancel',
+                            btnCancelOnPress: () {
+
+                            },
+                            onDissmissCallback: () {
+
+                            }
+                          )..show();
                         }
-                        await FileService.saveImageToDownload(arcImage, '$fileName-ARC');
                       }
-                      if (personImage != null && result) {
-                        String fileName = arcNumber;
-                        if (appNumber != null && appNumber.length > 0){
-                          fileName = '$arcNumber-$appNumber';
-                        }
-                        await FileService.saveImageToDownload(personImage, '$fileName-Person');
-                      }
-                      await Future.delayed(Duration(seconds: 3));
-                      if (result) {
-                        showFloatingFlushbar(context, 'Files saved to the Download folder!', true);
-                      }
-                      setState(() {
-                        saveButtonState = false;
-                      });
                     },
                     icon: Icon(
                       Icons.file_download,
                       color: Colors.white,
                     ),
                     linearGradient: LinearGradient(
-                        colors: [Color(0xFF1D73FF), Color(0xFF438AFE)]),
-                    navigate: false,
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  KButton(
-                    text: 'Sheet Upload',
-                    busy: sheetButtonState,
-                    onPressed: () async {
-                      if (sheetValidate(context)) {
-                        setState(() {
-                          sheetButtonState = true;
-                        });
-                        SheetModel sheetModel = SheetModel(
-                          name: name,
-                          applicationNumber: appNumber,
-                          phoneNumber: phoneNumber,
-                          arcNumber: arcNumber,
-                        );
-
-                        SheetService sheeService = SheetService(
-                          (String response){
-                            print(response);
-                            if(response == SheetService.STATUS_SUCCESS){
-                              showFloatingFlushbar(context, 'Done', true);
-                              setState(() {
-                                sheetButtonState = false;
-                              });
-                            } else {
-                              print(response);
-                              showFloatingFlushbar(context, 'Failed', false);
-                              setState(() {
-                                sheetButtonState = false;
-                              });
-                            }
-                          }
-                        );
-
-                        sheeService.submitData(sheetModel);
-
-                      } 
-                    },
-                    icon: Icon(
-                      Icons.cloud_upload,
-                      color: Colors.white,
-                    ),
-                    linearGradient: LinearGradient(
-                        colors: [Color(0xFF1D73FF), Color(0xFF438AFE)]),
-                    navigate: false,
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: AppColors.linearGradient,
-                    ),
-                    width: devWidth,
-                    height: devHeight * 0.1,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    child: Column(
-                      children: [
-                        Text('Developed by',
-                            style: GoogleFonts.roboto(
-                                textStyle: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white))),
-                        Text('E9pay Remittance Sri Lanka',
-                            style: GoogleFonts.roboto(
-                                textStyle: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white))),
+                      colors: [
+                        Color(0xFF1D73FF),
+                        Color(0xFF438AFE),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: AppColors.linearGradient,
+                  ),
+                  width: devWidth,
+                  height: devHeight * 0.08,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Developed by',
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'E9pay Remittance Sri Lanka',
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           Positioned(
@@ -785,17 +652,273 @@ class _HomePageState extends State<HomePage> {
                 width: devWidth,
                 height: devHeight * 0.1,
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Text('E9pass Register',
-                    style: GoogleFonts.roboto(
-                        textStyle: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white))),
+                child: Text(
+                  'E9pass Customer Service',
+                  style: GoogleFonts.roboto(
+                    textStyle: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
+          saving ? Container(
+            width: devWidth,
+            height: devHeight,
+            child: Center(
+              child: Container(
+                width: devWidth * 0.4,
+                height: devWidth * 0.4,
+                padding: EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: CircularProgressIndicator()
+              ),
+            ),
+          ) : Container(),
         ],
       ),
     );
+  }
+
+  Widget nameInput() {
+   return TextFormField(
+     textCapitalization: TextCapitalization.characters,
+     keyboardType: TextInputType.text,
+     decoration: InputDecoration(
+       labelText: 'Name',
+       hintText: 'ALSJR ALFJHSF',
+       border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20.0),
+      ),
+      labelStyle: TextStyle(
+        color: Colors.black,
+        fontSize: 16,
+        fontWeight: FontWeight.bold
+      )
+     ),
+     textInputAction: TextInputAction.done,
+     validator: (value) {
+       if (value == null || value == '') {
+         return 'Name Cannot Be Empty!';
+       } else {
+         return null;
+       }
+     },
+     onChanged: (value) {
+       setState(() {
+         name = value;
+       });
+     },
+   );
+  }
+
+  Widget arcNumberInput() {
+   return TextFormField(
+     textCapitalization: TextCapitalization.none,
+     keyboardType: TextInputType.text,
+     decoration: InputDecoration(
+       labelText: 'ARC Number',
+       hintText: '920802-XXXXXXX',
+       border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20.0),
+      ),
+      labelStyle: TextStyle(
+        color: Colors.black,
+        fontSize: 16,
+        fontWeight: FontWeight.bold
+      )
+     ),
+     textInputAction: TextInputAction.done,
+     validator: (value) {
+       if (value == null || value == '') {
+         return 'ARC Number Cannot Be Empty!';
+       } else {
+         return null;
+       }
+     },
+     onChanged: (value) {
+       setState(() {
+         arcNumber = value;
+       });
+     },
+   );
+  }
+
+  Widget phoneNumberInput() {
+   return TextFormField(
+     textCapitalization: TextCapitalization.none,
+     keyboardType: TextInputType.number,
+     decoration: InputDecoration(
+       labelText: 'Phone Number',
+       hintText: '010-7200-0988',
+       border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20.0),
+      ),
+      labelStyle: TextStyle(
+        color: Colors.black,
+        fontSize: 16,
+        fontWeight: FontWeight.bold
+      )
+     ),
+     textInputAction: TextInputAction.done,
+     validator: (value) {
+       if (value == null || value == '') {
+         return 'Phone Number Cannot Be Empty!';
+       } else {
+         return null;
+       }
+     },
+     onChanged: (value) {
+       setState(() {
+         phoneNumber = value;
+       });
+     },
+   );
+  }
+
+  Future getQrResult() async {
+    String cameraScanResult = await FlutterBarcodeScanner.scanBarcode(
+        "#ff6666", "Cancel", true, ScanMode.QR);
+    if (cameraScanResult != null && cameraScanResult.length > 4) {
+      setState(() {
+        appNumber = cameraScanResult;
+      });
+    } else {
+      setState(() {
+        appNumber = null;
+      });
+    }
+  }
+
+  void getArcImage(double devHeight, double devWidth) {
+    showModalBottomSheet(
+        context: context,
+        builder: (builder) {
+          return new Container(
+            height: devHeight * 0.15,
+            width: devWidth,
+            color: Colors.transparent,
+            child: new Container(
+                decoration: new BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: new BorderRadius.only(
+                        topLeft: const Radius.circular(10.0),
+                        topRight: const Radius.circular(10.0))),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Container(
+                      width: devWidth * 0.4,
+                      child: KButton(
+                        onPressed: () async {
+                          File imageFile =
+                              await _camService.getImage(ImageSource.camera);
+                          setState(() {
+                            arcImage = imageFile;
+                          });
+                          Navigator.pop(context);
+                        },
+                        text: 'Camera',
+                        icon: Icon(
+                          Icons.camera,
+                          color: Colors.white,
+                        ),
+                        linearGradient: AppColors.linearGradient,
+                      ),
+                    ),
+                    Container(
+                      width: devWidth * 0.4,
+                      child: KButton(
+                        onPressed: () async {
+                          File imageFile =
+                              await _camService.getImage(ImageSource.gallery);
+                          setState(() {
+                            arcImage = imageFile;
+                          });
+                          Navigator.pop(context);
+                        },
+                        text: 'Gallery',
+                        icon: Icon(
+                          Icons.image,
+                          color: Colors.white,
+                        ),
+                        linearGradient: AppColors.linearGradient,
+                      ),
+                    ),
+                  ],
+                )),
+          );
+        });
+  }
+
+  void getPersonImage(double devHeight, double devWidth) {
+    showModalBottomSheet(
+        context: context,
+        builder: (builder) {
+          return new Container(
+            height: devHeight * 0.15,
+            width: devWidth,
+            color: Colors.transparent,
+            child: new Container(
+                decoration: new BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: new BorderRadius.only(
+                        topLeft: const Radius.circular(10.0),
+                        topRight: const Radius.circular(10.0))),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Container(
+                      width: devWidth * 0.4,
+                      child: KButton(
+                        onPressed: () async {
+                          File imageFile =
+                              await _camService.getImage(ImageSource.camera);
+                          setState(() {
+                            personImage = imageFile;
+                          });
+                          Navigator.pop(context);
+                        },
+                        text: 'Camera',
+                        icon: Icon(
+                          Icons.camera,
+                          color: Colors.white,
+                        ),
+                        linearGradient: AppColors.linearGradient,
+                      ),
+                    ),
+                    Container(
+                      width: devWidth * 0.4,
+                      child: KButton(
+                        onPressed: () async {
+                          File imageFile =
+                              await _camService.getImage(ImageSource.gallery);
+                          setState(() {
+                            personImage = imageFile;
+                          });
+                          Navigator.pop(context);
+                        },
+                        text: 'Gallery',
+                        icon: Icon(
+                          Icons.image,
+                          color: Colors.white,
+                        ),
+                        linearGradient: AppColors.linearGradient,
+                      ),
+                    ),
+                  ],
+                )),
+          );
+        });
   }
 }
