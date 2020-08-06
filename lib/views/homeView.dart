@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:e9pass_cs/models/appSettings.dart';
@@ -9,6 +10,7 @@ import 'package:e9pass_cs/repository/sheetService.dart';
 import 'package:e9pass_cs/state/settingsProvider.dart';
 import 'package:e9pass_cs/views/settingsView.dart';
 import 'package:e9pass_cs/widget/customButton.dart';
+import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -27,6 +29,8 @@ class _HomePageState extends State<HomePage> {
   Animation<double> topBarAnimation;
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  TextEditingController arcController;
+  TextEditingController nameController;
   CamService _camService = CamService();
   PdfFactory _pdfFactory = PdfFactory();
   FileService _fileService = FileService();
@@ -45,6 +49,8 @@ class _HomePageState extends State<HomePage> {
   SettingsProvider mySettingsProvider;
   AppSettings appSettings;
   bool isSwitched;
+  Size _imageSize;
+  String recognizedText = "Loading ...";
 
   Future<Map<String, dynamic>> savePdfAndPhotos() async {
     try {
@@ -102,6 +108,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     _scrollController = ScrollController();
+    arcController = TextEditingController(text: null);
+    nameController = TextEditingController(text: null);
     _scrollController.addListener(scroollListener);
     settingsProvider ??= Provider.of<SettingsProvider>(context, listen: false);
     settingsProvider.getSettings('settings');
@@ -257,6 +265,8 @@ class _HomePageState extends State<HomePage> {
                   child: KButton(
                     text: 'ARC / Passport',
                     onPressed: () {
+                      arcController.clear();
+                      nameController.clear();
                       getArcImage(devHeight, devWidth);
                     },
                     icon: Icon(
@@ -609,7 +619,7 @@ class _HomePageState extends State<HomePage> {
                     gradient: AppColors.linearGradient,
                   ),
                   width: devWidth,
-                  height: devHeight * 0.08,
+                  height: devHeight * 0.1,
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Column(
                     children: [
@@ -725,6 +735,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget nameInput() {
     return TextFormField(
+      controller: nameController,
       textCapitalization: TextCapitalization.characters,
       keyboardType: TextInputType.text,
       decoration: InputDecoration(
@@ -753,6 +764,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget arcNumberInput() {
     return TextFormField(
+      controller: arcController,
       textCapitalization: TextCapitalization.none,
       keyboardType: TextInputType.text,
       decoration: InputDecoration(
@@ -821,6 +833,89 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> getImageSize(File imageFile) async {
+    final Completer<Size> completer = Completer<Size>();
+    // Fetching image from path
+    final Image image = Image.file(imageFile);
+
+    // Retrieving its size
+    image.image.resolve(const ImageConfiguration()).addListener(
+      ImageStreamListener((ImageInfo info, bool _) {
+        completer.complete(Size(
+          info.image.width.toDouble(),
+          info.image.height.toDouble(),
+        ));
+      }),
+    );
+
+    final Size imageSize = await completer.future;
+    setState(() {
+      _imageSize = imageSize;
+    });
+  }
+
+  void initializeVision(File imageToRead) async {
+    if (imageToRead != null) {
+      await getImageSize(imageToRead);
+    }
+    final FirebaseVisionImage visionImage = FirebaseVisionImage.fromFile(imageToRead);
+    final TextRecognizer textRecognizer = FirebaseVision.instance.textRecognizer();
+    final VisionText visionText = await textRecognizer.processImage(visionImage);
+    String arcNumPattern = r"[7-9][0-9][0-1][0-9][0-3][0-9]-[5-6][0-9]{6}";
+    String namePattern = r"[a-zA-Z -]+";
+    String arcRemovePattern = r"ALIEN|REGISTRATION|CARD|KOR";
+    RegExp regExArc = RegExp(arcNumPattern);
+    RegExp regExName = RegExp(namePattern);
+    RegExp regExArcRemove = RegExp(arcRemovePattern);
+    String visionArcNumber;
+    String fullName;
+    List<String> nameList = List();
+    for (TextBlock block in visionText.blocks) {
+      for (TextLine line in block.lines) {
+        // Checking if the line contains an email address
+        if (regExArc.hasMatch(line.text)) {
+          RegExpMatch match = regExArc.firstMatch(line.text);
+          // print(match.group(0));
+          visionArcNumber = match.group(0);
+        }
+        if (regExName.hasMatch(line.text) && !regExArcRemove.hasMatch(line.text)) {
+          RegExpMatch match = regExName.firstMatch(line.text);
+          nameList.add(match.group(0));
+        }
+      }
+    }
+    if (nameList.length >= 4) {
+      for (String name in nameList){
+        if (name.length > 12){
+          int index = nameList.indexOf(name);
+          String lastElement = nameList[index].substring(nameList[index].length - 1, nameList[index].length);
+          if (lastElement == '-') {
+            fullName = nameList[index].substring(0, nameList[index].length - 1) + nameList[index+1];
+          } else {
+            fullName = nameList[index] + ' ' + nameList[index+1];
+          }
+          break;
+        }
+      } 
+    }
+    String corectedFullName = '';
+    for (String i in fullName.split('')) {
+      // print(i);
+      if (i == 'l') {
+        corectedFullName += 'I';
+      } else {
+        corectedFullName += i;
+      }
+    }
+    if (this.mounted) {
+      setState(() {
+        arcController.text = visionArcNumber;
+        nameController.text = corectedFullName;
+      });
+      textRecognizer.close();
+    }
+  }
+
   void getArcImage(double devHeight, double devWidth) {
     showModalBottomSheet(
         context: context,
@@ -843,8 +938,10 @@ class _HomePageState extends State<HomePage> {
                       width: devWidth * 0.5,
                       child: KButton(
                         onPressed: () async {
-                          File imageFile =
-                              await _camService.getImage(ImageSource.camera);
+                          File imageFile = await _camService.getImage(
+                            ImageSource.camera,
+                          );
+                          initializeVision(imageFile);
                           setState(() {
                             arcImage = imageFile;
                           });
@@ -862,8 +959,10 @@ class _HomePageState extends State<HomePage> {
                       width: devWidth * 0.5,
                       child: KButton(
                         onPressed: () async {
-                          File imageFile =
-                              await _camService.getImage(ImageSource.gallery);
+                          File imageFile = await _camService.getImage(
+                            ImageSource.gallery,
+                          );
+                          initializeVision(imageFile);
                           setState(() {
                             arcImage = imageFile;
                           });
