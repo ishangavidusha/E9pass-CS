@@ -1,3 +1,4 @@
+import 'package:e9pass_cs/state/fileProvider.dart';
 import 'package:e9pass_cs/state/settingsProvider.dart';
 import 'package:e9pass_cs/views/homeView.dart';
 import 'package:flutter/material.dart';
@@ -12,8 +13,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    return ChangeNotifierProvider<SettingsProvider>(
-      create: (context) => SettingsProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<SettingsProvider>(create: (context) => SettingsProvider()),
+        ChangeNotifierProvider<FileProvider>(create: (context) => FileProvider()),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'E9pass CS',
@@ -22,7 +26,7 @@ class MyApp extends StatelessWidget {
           visualDensity: VisualDensity.adaptivePlatformDensity,
           canvasColor: Colors.transparent,
         ),
-        home: HomePage(),
+        home: HomeView(),
       ),
     );
   }
