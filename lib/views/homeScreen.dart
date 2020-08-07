@@ -5,12 +5,12 @@ import 'package:e9pass_cs/widget/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class HomeView extends StatefulWidget {
+class HomeScreen extends StatefulWidget {
   @override
-  _HomeViewState createState() => _HomeViewState();
+  _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeViewState extends State<HomeView> {
+class _HomeScreenState extends State<HomeScreen> {
   ScrollController _scrollController;
   bool showTitleBar = false;
   double topBarOpacity = 0.0;
