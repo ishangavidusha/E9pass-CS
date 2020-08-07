@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "231252319349",
+    "firebase_url": "https://e9pass-cs.firebaseio.com",
+    "project_id": "e9pass-cs",
+    "storage_bucket": "e9pass-cs.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:231252319349:android:c6ea3e395af29c99bb6c3c",
+        "android_client_info": {
+          "package_name": "com.e9pay.e9passcs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "231252319349-9orf1hmo9m77ci6bbaatu0lma3dk52fm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAA5z-zBRdvUw_xMvpB0pXDsmABTqhyRcc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "231252319349-9orf1hmo9m77ci6bbaatu0lma3dk52fm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
