@@ -1,9 +1,13 @@
+import 'dart:ui';
+
+import 'package:e9pass_cs/repository/authService.dart';
 import 'package:e9pass_cs/views/fileView.dart';
 import 'package:e9pass_cs/views/pdfCreaterView.dart';
 import 'package:e9pass_cs/views/settingsView.dart';
 import 'package:e9pass_cs/widget/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -14,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ScrollController _scrollController;
   bool showTitleBar = false;
   double topBarOpacity = 0.0;
+  AuthService authService;
 
   @override
   void initState() {
@@ -57,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     double devWidth = MediaQuery.of(context).size.width;
     double devHeight = MediaQuery.of(context).size.height;
+    authService = Provider.of<AuthService>(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -176,6 +182,99 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: authService.currentUser != null ? Container(
+              width: devWidth,
+              margin: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    offset: Offset(0, 6),
+                    blurRadius: 10
+                  ),
+                ]
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: 10.0,
+                    sigmaY: 10.0,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'You are currently logedin as',
+                              style: GoogleFonts.roboto(
+                                textStyle: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.mainTextColor,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              authService.currentUser.displayName,
+                              style: GoogleFonts.roboto(
+                                textStyle: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.mainTextColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Stack(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.buttonShadowColor,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.buttonShadowColor.withOpacity(0.4),
+                                    blurRadius: 20,
+                                    offset: Offset(0, 6)
+                                  )
+                                ]
+                              ),
+                            ),
+                            Container(
+                              margin: EdgeInsets.all(2),
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.yellow,
+                                image: DecorationImage(
+                                  image: NetworkImage(authService.currentUser.photoUrl),
+                                )
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ) : Container(),
+          ),
         ],
       ),
     );
@@ -194,20 +293,38 @@ class CardButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+      child: Container(
+        margin: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          bottom: 20,
         ),
-        elevation: 6,
-        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        color: Colors.white,
+        decoration: BoxDecoration(
+          gradient: AppColors.linearGradient,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.buttonShadowColor.withOpacity(0.4),
+              offset: Offset(0.0, 10),
+              blurRadius: 10,
+            ),
+          ]
+        ),
         child: Container(
           padding: EdgeInsets.all(10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(10),
+              Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      offset: Offset(0.0, 4),
+                      blurRadius: 8,
+                    ),
+                  ]
+                ),
                 child: Image.asset(
                   image,
                   height: 40,
@@ -225,7 +342,7 @@ class CardButton extends StatelessWidget {
                         textStyle: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.mainTextColor,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -235,7 +352,7 @@ class CardButton extends StatelessWidget {
                         textStyle: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.mainTextColor,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -244,7 +361,7 @@ class CardButton extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.all(10),
-                child: Icon(Icons.arrow_forward_ios, color: AppColors.mainTextColor,)
+                child: Icon(Icons.arrow_forward_ios, color: Colors.white,)
               ),
             ],
           ),

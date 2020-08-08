@@ -1,3 +1,4 @@
+import 'package:e9pass_cs/repository/authService.dart';
 import 'package:e9pass_cs/state/fileProvider.dart';
 import 'package:e9pass_cs/state/settingsProvider.dart';
 import 'package:e9pass_cs/views/homeScreen.dart';
@@ -19,6 +20,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<SettingsProvider>(create: (context) => SettingsProvider()),
         ChangeNotifierProvider<FileProvider>(create: (context) => FileProvider()),
+        ChangeNotifierProvider<AuthService>(create: (context) => AuthService()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

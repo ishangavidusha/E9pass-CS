@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "231252319349-qaa3051mitdksooqfm6n5ce07rqd8c9n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.e9pay.e9passcs",
+            "certificate_hash": "2c90cfe934597c394e263762dd3a5e4292ab1511"
+          }
+        },
+        {
           "client_id": "231252319349-9orf1hmo9m77ci6bbaatu0lma3dk52fm.apps.googleusercontent.com",
           "client_type": 3
         }

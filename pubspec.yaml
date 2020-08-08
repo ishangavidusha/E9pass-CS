@@ -49,6 +49,8 @@ dependencies:
   firebase_ml_vision: ^0.9.5
   flutter_fullpdfview: ^1.1.5
   flutter_share: ^1.0.2+1
+  google_sign_in: ^4.5.1
+  firebase_auth: ^0.16.1
 
 dev_dependencies:
   flutter_test:

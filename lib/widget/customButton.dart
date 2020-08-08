@@ -26,7 +26,7 @@ class KButton extends StatelessWidget {
         gradient: AppColors.linearGradient, 
         boxShadow: [
           BoxShadow(
-            color: Color(0xFF438AFE).withOpacity(0.4),
+            color: AppColors.buttonShadowColor.withOpacity(0.4),
             offset: Offset(0.0, 10),
             blurRadius: 15,
           ),

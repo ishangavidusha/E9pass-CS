@@ -1,8 +1,10 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:e9pass_cs/models/appSettings.dart';
+import 'package:e9pass_cs/repository/authService.dart';
 import 'package:e9pass_cs/state/settingsProvider.dart';
 import 'package:e9pass_cs/widget/colors.dart';
 import 'package:e9pass_cs/widget/customButton.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +16,8 @@ class SettingsView extends StatefulWidget {
 
 class _SettingsViewState extends State<SettingsView> {
   SettingsProvider settingsProvider;
+  FirebaseUser currentUser;
+  AuthService authService;
   String sheetUrl;
   bool isSwitched;
   @override
@@ -21,6 +25,7 @@ class _SettingsViewState extends State<SettingsView> {
     double devWidth = MediaQuery.of(context).size.width;
     double devHeight = MediaQuery.of(context).size.height;
     settingsProvider = Provider.of<SettingsProvider>(context);
+    authService = Provider.of<AuthService>(context);
     isSwitched = settingsProvider.appSettings?.upload == null ? false : settingsProvider.appSettings.upload;
     return Scaffold(
       body: Stack(
@@ -262,11 +267,103 @@ class _SettingsViewState extends State<SettingsView> {
                         ),
                       ],
                     ),
-                  )
+                  ),
+                  authService.currentUser != null ? Container(
+                    width: devWidth,
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Stack(
+                          children: [
+                            Container(
+                              width: devWidth * 0.3,
+                              height: devWidth * 0.3,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.buttonShadowColor,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.buttonShadowColor.withOpacity(0.4),
+                                    blurRadius: 20,
+                                    offset: Offset(0, 6)
+                                  )
+                                ]
+                              ),
+                            ),
+                            Container(
+                              margin: EdgeInsets.all(devWidth * 0.025),
+                              width: devWidth * 0.25,
+                              height: devWidth * 0.25,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.yellow,
+                                image: DecorationImage(
+                                  image: NetworkImage(authService.currentUser.photoUrl),
+                                )
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Text(
+                          authService.currentUser.displayName,
+                          style: GoogleFonts.roboto(
+                            textStyle: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.mainTextColor,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          authService.currentUser.email,
+                          style: GoogleFonts.roboto(
+                            textStyle: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.mainTextColor,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                      ],
+                    ),
+                  ) : Container()
                 ],
               ),
             ),
-          )
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+              width: devWidth,
+              height: 50,
+              child: authService.currentUser == null ? KButton(
+                text: 'LogIn',
+                onPressed: () async {
+                  authService.signInWithGoogle();
+                },
+                icon: Icon(Icons.power, color: Colors.white,),
+                linearGradient: AppColors.linearGradient,
+              ) : KButton(
+                text: 'LogOut',
+                onPressed: () async {
+                  authService.signOutGoogle();
+                },
+                icon: Icon(Icons.power, color: Colors.white,),
+                linearGradient: AppColors.linearGradient,
+              ),
+            ),
+          ),
         ],
       ),
     );
