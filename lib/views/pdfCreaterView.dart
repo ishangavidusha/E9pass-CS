@@ -94,6 +94,8 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
   void resetData() {
     setState(() {
       _formKey.currentState.reset();
+      arcController.clear();
+      nameController.clear();
       pdf = null;
       arcImage = null;
       personImage = null;
