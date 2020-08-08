@@ -8,7 +8,6 @@ import 'package:e9pass_cs/repository/fileService.dart';
 import 'package:e9pass_cs/repository/pdfFactory.dart';
 import 'package:e9pass_cs/repository/sheetService.dart';
 import 'package:e9pass_cs/state/settingsProvider.dart';
-import 'package:e9pass_cs/views/settingsView.dart';
 import 'package:e9pass_cs/widget/customButton.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
@@ -267,6 +266,8 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
                     onPressed: () {
                       arcController.clear();
                       nameController.clear();
+                      arcNumber = null;
+                      name = null;
                       getArcImage(devHeight, devWidth);
                     },
                     icon: Icon(
@@ -747,6 +748,11 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
           name = value;
         });
       },
+      onSaved: (newValue) {
+        setState(() {
+          name = newValue;
+        });
+      },
     );
   }
 
@@ -776,6 +782,11 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
           arcNumber = value;
         });
       },
+      onSaved: (newValue) {
+        setState(() {
+          arcNumber = newValue;
+        });
+      },
     );
   }
 
@@ -802,6 +813,11 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
       onChanged: (value) {
         setState(() {
           phoneNumber = value;
+        });
+      },
+      onSaved: (newValue) {
+        setState(() {
+          phoneNumber = newValue;
         });
       },
     );
@@ -843,9 +859,9 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
   }
 
   void initializeVision(File imageToRead) async {
-    if (imageToRead != null) {
-      await getImageSize(imageToRead);
-    }
+    // if (imageToRead != null) {
+    //   await getImageSize(imageToRead);
+    // }
     final FirebaseVisionImage visionImage = FirebaseVisionImage.fromFile(imageToRead);
     final TextRecognizer textRecognizer = FirebaseVision.instance.textRecognizer();
     final VisionText visionText = await textRecognizer.processImage(visionImage);
@@ -898,7 +914,9 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
     if (this.mounted) {
       setState(() {
         arcController.text = visionArcNumber;
+        arcNumber = visionArcNumber;
         nameController.text = corectedFullName;
+        name = corectedFullName;
       });
       textRecognizer.close();
     }

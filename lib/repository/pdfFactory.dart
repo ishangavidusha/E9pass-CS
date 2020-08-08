@@ -35,7 +35,8 @@ class PdfFactory {
     name = name != null && name.length > 0 ? name : ' ';
     phoneNumber = phoneNumber != null && phoneNumber.length > 0 ? phoneNumber : ' ';
     appNumber = appNumber != null && appNumber.length > 0 ? appNumber : ' ';
-
+    arcNumber = arcNumber != null && arcNumber.length > 0 ? arcNumber : ' ';
+    
     pdf.addPage(pw.Page(
         pageFormat: PdfPageFormat.a4,
         margin: pw.EdgeInsets.fromLTRB(20, 10, 20, 10),
