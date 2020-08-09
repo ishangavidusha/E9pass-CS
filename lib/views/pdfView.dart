@@ -1,18 +1,23 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:e9pass_cs/repository/authService.dart';
+import 'package:e9pass_cs/repository/driveService.dart';
 import 'package:e9pass_cs/widget/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fullpdfview/flutter_fullpdfview.dart';
+import 'package:provider/provider.dart';
 
 class PdfView extends StatefulWidget {
-  final String path;
-  PdfView({Key key, this.path}) : super(key: key);
+  final File file;
+  PdfView({Key key, this.file}) : super(key: key);
 
   @override
   _PdfViewState createState() => _PdfViewState();
 }
 
 class _PdfViewState extends State<PdfView> {
+  DriveService driveService = DriveService();
   int pages = 0;
   bool isReady = false;
   String errorMessage = '';
@@ -21,10 +26,12 @@ class _PdfViewState extends State<PdfView> {
   double scale = 1.0;
   double top = 200.0;
   double initialLocalFocalPoint;
+  bool loading = false;
   @override
   Widget build(BuildContext context) {
+    AuthService authService = Provider.of<AuthService>(context);
     final Completer<PDFViewController> _controller = Completer<PDFViewController>();
-    List<String> title = widget.path.split('/');
+    List<String> title = widget.file.path.split('/');
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.backgroundColor,
@@ -42,7 +49,7 @@ class _PdfViewState extends State<PdfView> {
         children: [
           Container(
             child: PDFView(
-              filePath: widget.path,
+              filePath: widget.file.path,
               key: pdfKey,
               fitEachPage: true,
               fitPolicy: FitPolicy.BOTH,
@@ -90,15 +97,17 @@ class _PdfViewState extends State<PdfView> {
       //   future: _controller.future,
       //   builder: (context, AsyncSnapshot<PDFViewController> snapshot) {
       //     if (snapshot.hasData) {
-      //       return FloatingActionButton.extended(
-      //         label: Row(
-      //           children: [
-      //             Icon(Icons.share),
-      //             Text('Share')
-      //           ],
-      //         ),
+      //       return FloatingActionButton(
       //         onPressed: () async {
-      //           await FlutterShare.shareFile(title: 'E9pass PDF', filePath: widget.path);
+      //           if (authService.currentUser != null) {
+      //             setState(() {
+      //               loading = true;
+      //             });
+      //             await driveService.uploadFileToGoogleDrive(authService, widget.file);
+      //             setState(() {
+      //               loading = false;
+      //             });
+      //           }
       //         },
       //       );
       //     }

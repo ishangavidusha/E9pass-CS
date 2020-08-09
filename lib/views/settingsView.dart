@@ -65,7 +65,7 @@ class _SettingsViewState extends State<SettingsView> {
             top: devHeight * 0.15,
             child: Container(
               width: devWidth,
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: Column(
                 children: [
                   Padding(
@@ -85,7 +85,8 @@ class _SettingsViewState extends State<SettingsView> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        width: 150,
+                        margin: EdgeInsets.only(bottom: 20),
+                        width: 100,
                         child: Text(
                           settingsProvider.appSettings != null ? settingsProvider.appSettings.sheetUrl != null ? settingsProvider.appSettings.sheetUrl : 'Not Set' : 'Not Set',
                           style: GoogleFonts.roboto(
@@ -99,6 +100,7 @@ class _SettingsViewState extends State<SettingsView> {
                         ),
                       ),
                       Container(
+                        margin: EdgeInsets.only(bottom: 20),
                         width: 150,
                         height: 40,
                         child: KButton(

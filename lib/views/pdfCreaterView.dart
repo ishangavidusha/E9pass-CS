@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:e9pass_cs/models/appSettings.dart';
 import 'package:e9pass_cs/models/sheetModel.dart';
@@ -704,20 +705,37 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
           ),
           saving
               ? Container(
-                  width: devWidth,
-                  height: devHeight,
-                  color: Colors.black.withOpacity(0.2),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: 6.0,
+                    sigmaY: 6.0,
+                  ),
                   child: Center(
                     child: Container(
-                      width: devWidth * 0.25,
-                      height: devWidth * 0.25,
-                      padding: EdgeInsets.all(20),
-                      child: CircularProgressIndicator(
-                        backgroundColor: Colors.white,
+                      width: devWidth * 0.4,
+                      height: devWidth * 0.3,
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Text(
+                            'Uploading...',
+                            style: GoogleFonts.roboto(
+                              textStyle: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          )
+                        ],
                       ),
                     ),
                   ),
-                )
+                ),
+              )
               : Container(),
         ],
       ),
@@ -875,6 +893,7 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
     RegExp regExArcRemove = RegExp(arcRemovePattern);
     String visionArcNumber;
     String fullName;
+    String corectedFullName = '';
     List<String> nameList = List();
     for (TextBlock block in visionText.blocks) {
       for (TextLine line in block.lines) {
@@ -902,23 +921,22 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
           }
           break;
         }
-      } 
-    }
-    String corectedFullName = '';
-    for (String i in fullName.split('')) {
-      // print(i);
-      if (i == 'l') {
-        corectedFullName += 'I';
-      } else {
-        corectedFullName += i;
+      }
+      for (String i in fullName.split('')) {
+        // print(i);
+        if (i == 'l') {
+          corectedFullName += 'I';
+        } else {
+          corectedFullName += i;
+        }
       }
     }
     if (this.mounted) {
       setState(() {
         arcController.text = visionArcNumber;
         arcNumber = visionArcNumber;
-        nameController.text = corectedFullName;
-        name = corectedFullName;
+        nameController.text = corectedFullName != null && corectedFullName.length > 0 ? corectedFullName : null;
+        name = corectedFullName != null && corectedFullName.length > 0 ? corectedFullName : null;
       });
       textRecognizer.close();
     }
@@ -949,7 +967,9 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
                           File imageFile = await _camService.getImage(
                             ImageSource.camera,
                           );
-                          initializeVision(imageFile);
+                          if (imageFile != null) {
+                            initializeVision(imageFile);
+                          }
                           setState(() {
                             arcImage = imageFile;
                           });
@@ -970,7 +990,9 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
                           File imageFile = await _camService.getImage(
                             ImageSource.gallery,
                           );
-                          initializeVision(imageFile);
+                          if (imageFile != null) {
+                            initializeVision(imageFile);
+                          }
                           setState(() {
                             arcImage = imageFile;
                           });

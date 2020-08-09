@@ -24,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     _scrollController = ScrollController();
     _scrollController.addListener(scroollListener);
+    Provider.of<AuthService>(context, listen: false).myuser;
     super.initState();
   }
 
@@ -216,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'You are currently logedin as',
+                              'You are currently logged in as',
                               style: GoogleFonts.roboto(
                                 textStyle: TextStyle(
                                   fontSize: 12,

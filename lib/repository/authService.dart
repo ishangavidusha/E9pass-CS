@@ -4,7 +4,13 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn googleSignIn = GoogleSignIn();
+  final GoogleSignIn googleSignIn = GoogleSignIn(
+    scopes: [
+      'email',
+      'https://www.googleapis.com/auth/drive',
+    ],
+  );
+  GoogleSignInAccount googleSignInAccount;
   FirebaseUser currentUser;
   String name;
   String email;
@@ -12,12 +18,17 @@ class AuthService with ChangeNotifier {
 
   Future<FirebaseUser> get myuser async {
     currentUser = await _auth.currentUser();
+    notifyListeners();
     return currentUser;
   }
 
+  Stream<FirebaseUser> getLoginState() {
+    return _auth.onAuthStateChanged;
+  }
+
   void signInWithGoogle() async {
-    final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
-    final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
+    GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
+    GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
 
     final AuthCredential credential = GoogleAuthProvider.getCredential(
       accessToken: googleSignInAuthentication.accessToken,
