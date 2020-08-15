@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:e9pass_cs/models/appSettings.dart';
+import 'package:e9pass_cs/models/fireSettings.dart';
 import 'package:e9pass_cs/repository/authService.dart';
+import 'package:e9pass_cs/repository/dbService.dart';
 import 'package:e9pass_cs/state/settingsProvider.dart';
 import 'package:e9pass_cs/widget/colors.dart';
 import 'package:e9pass_cs/widget/customButton.dart';
@@ -20,6 +23,37 @@ class _SettingsViewState extends State<SettingsView> {
   AuthService authService;
   String sheetUrl;
   bool isSwitched;
+  List<AppData> appData;
+  AppData currentValue;
+  Timer timer;
+
+  void getCurrentValue() {
+    Duration duration = Duration(milliseconds: 16);
+    timer = Timer.periodic(duration, (timer) async {
+      if (appData != null && settingsProvider?.appSettings != null) {
+        appData.forEach((element) {
+          if (element.country == settingsProvider.appSettings.country) {
+            setState(() {
+              currentValue = element;
+            });
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getCurrentValue();
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     double devWidth = MediaQuery.of(context).size.width;
@@ -27,7 +61,9 @@ class _SettingsViewState extends State<SettingsView> {
     settingsProvider = Provider.of<SettingsProvider>(context);
     authService = Provider.of<AuthService>(context);
     isSwitched = settingsProvider.appSettings?.upload == null ? false : settingsProvider.appSettings.upload;
+    appData = Provider.of<DataRepository>(context).appData;
     return Scaffold(
+      backgroundColor: AppColors.backgroundColor,
       body: Stack(
         children: [
           Positioned(
@@ -68,141 +104,86 @@ class _SettingsViewState extends State<SettingsView> {
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: Text(
-                      'Add Sheet URL',
-                      style: GoogleFonts.roboto(
-                        textStyle: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.mainTextColor,
-                        ),
-                      ),
-                    ),
-                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        margin: EdgeInsets.only(bottom: 20),
-                        width: 100,
-                        child: Text(
-                          settingsProvider.appSettings != null ? settingsProvider.appSettings.sheetUrl != null ? settingsProvider.appSettings.sheetUrl : 'Not Set' : 'Not Set',
-                          style: GoogleFonts.roboto(
-                            textStyle: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.mainTextColor,
-                            ),
+                      Text(
+                        'Country',
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.mainTextColor,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Container(
-                        margin: EdgeInsets.only(bottom: 20),
-                        width: 150,
-                        height: 40,
-                        child: KButton(
-                          text: 'Edit URL',
-                          linearGradient: AppColors.linearGradient,
-                          onPressed: () {
-                            AwesomeDialog(
-                              context: context,
-                              dialogType: DialogType.NO_HEADER,
-                              animType: AnimType.BOTTOMSLIDE,
-                              body: TextField(
-                                textCapitalization: TextCapitalization.none,
-                                keyboardType: TextInputType.text,
-                                decoration: InputDecoration(
-                                  labelText: 'Sheet Url',
-                                  hintText: 'http//:....',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(20.0),
-                                  ),
-                                  labelStyle: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold
-                                  )
-                                ),
-                                textInputAction: TextInputAction.done,
-                                onChanged: (value) {
-                                  setState(() {
-                                    sheetUrl = value;
-                                  });
-                                },
-                                onSubmitted: (value) async {
-                                  setState(() {
-                                    sheetUrl = value;
-                                  });
-                                },
-                              ),
-                              btnOkText: 'Done',
-                              btnOkOnPress: () async {
-                                if (sheetUrl != null && sheetUrl.length > 0) {
-                                  AppSettings appSettings = await settingsProvider.getSettings('settings');
-                                  if (appSettings == null) {
-                                    appSettings = AppSettings(
-                                      country: 'SL',
-                                      upload: true,
-                                      sheetUrl: sheetUrl
-                                    );
-                                  } else {
-                                    appSettings.sheetUrl = sheetUrl;
-                                    appSettings.upload = true;
-                                  }
-                                  bool result = await settingsProvider.setSettings('settings', appSettings);
-                                  if (result) {
-                                    AwesomeDialog(
-                                      context: context,
-                                      dialogType: DialogType.SUCCES,
-                                      animType: AnimType.BOTTOMSLIDE,
-                                      title: 'Succes',
-                                      desc: 'Settings Saved',
-                                      btnOkText: 'Done',
-                                      btnOkOnPress: () {
-                                        // pop
-                                      },
-                                      onDissmissCallback: () {
-
-                                      }
-                                    )..show();
-                                  } else {
-                                    AwesomeDialog(
-                                      context: context,
-                                      dialogType: DialogType.ERROR,
-                                      animType: AnimType.BOTTOMSLIDE,
-                                      title: 'Faild',
-                                      desc: 'Faild to save URL',
-                                      btnOkText: 'Done',
-                                      btnOkOnPress: () {
-                                        // pop
-                                      },
-                                      onDissmissCallback: () {
-
-                                      }
-                                    )..show();
-                                  }
-                                }
-                              },
-                              onDissmissCallback: () {
-
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<AppData>(
+                          hint: Text('Change Country'),
+                          value: currentValue != null ? currentValue : null,
+                          items: appData.isNotEmpty ? appData.map((e) => DropdownMenuItem(
+                            child: Text(e.country),
+                            value: e,
+                          )).toList() : [],
+                          onChanged: (value) async {
+                            if (value != null && value.sheetUrl.length > 0) {
+                              AppSettings appSettings = await settingsProvider.getSettings('settings');
+                              if (appSettings == null) {
+                                appSettings = AppSettings(
+                                  country: value.country,
+                                  upload: true,
+                                  sheetUrl: value.sheetUrl
+                                );
+                              } else {
+                                appSettings.sheetUrl = value.sheetUrl;
+                                appSettings.country = value.country;
+                                appSettings.upload = true;
                               }
-                            )..show();
+                              bool result = await settingsProvider.setSettings('settings', appSettings);
+                              if (result) {
+                                AwesomeDialog(
+                                  context: context,
+                                  dialogType: DialogType.SUCCES,
+                                  animType: AnimType.BOTTOMSLIDE,
+                                  title: 'Succes',
+                                  desc: 'Settings Saved',
+                                  btnOkText: 'Done',
+                                  btnOkOnPress: () {
+                                    // pop
+                                  },
+                                  onDissmissCallback: () {
+
+                                  }
+                                )..show();
+                              } else {
+                                AwesomeDialog(
+                                  context: context,
+                                  dialogType: DialogType.ERROR,
+                                  animType: AnimType.BOTTOMSLIDE,
+                                  title: 'Faild',
+                                  desc: 'Faild to save URL',
+                                  btnOkText: 'Done',
+                                  btnOkOnPress: () {
+                                    // pop
+                                  },
+                                  onDissmissCallback: () {
+
+                                  }
+                                )..show();
+                              }
+                            }
                           },
-                          icon: Icon(Icons.edit, color: Colors.white,),
                         ),
                       ),
                     ],
                   ),
                   Container(
-                    padding: EdgeInsets.symmetric(vertical: 20),
+                    padding: EdgeInsets.symmetric(vertical: 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Upload ON/OFF',
+                          'Sheet Upload ON/OFF',
                           style: GoogleFonts.roboto(
                             textStyle: TextStyle(
                               fontSize: 18,

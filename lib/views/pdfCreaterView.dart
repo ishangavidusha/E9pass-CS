@@ -946,68 +946,71 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
     showModalBottomSheet(
         context: context,
         builder: (builder) {
-          return new Container(
-            height: devHeight * 0.2,
-            width: devWidth,
-            color: Colors.transparent,
+          return Theme(
+            data: Theme.of(context).copyWith(canvasColor: Colors.transparent),
             child: new Container(
-                margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                decoration: new BoxDecoration(
-                    color: AppColors.backgroundColor,
-                    borderRadius: BorderRadius.circular(20)),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Container(
-                      width: devWidth * 0.5,
-                      child: KButton(
-                        onPressed: () async {
-                          File imageFile = await _camService.getImage(
-                            ImageSource.camera,
-                          );
-                          if (imageFile != null) {
-                            initializeVision(imageFile);
-                          }
-                          setState(() {
-                            arcImage = imageFile;
-                          });
-                          Navigator.pop(context);
-                        },
-                        text: 'Camera',
-                        icon: Icon(
-                          Icons.camera,
-                          color: Colors.white,
+              height: devHeight * 0.2,
+              width: devWidth,
+              color: Colors.transparent,
+              child: new Container(
+                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  decoration: new BoxDecoration(
+                      color: AppColors.backgroundColor,
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Container(
+                        width: devWidth * 0.5,
+                        child: KButton(
+                          onPressed: () async {
+                            File imageFile = await _camService.getImage(
+                              ImageSource.camera,
+                            );
+                            if (imageFile != null) {
+                              initializeVision(imageFile);
+                            }
+                            setState(() {
+                              arcImage = imageFile;
+                            });
+                            Navigator.pop(context);
+                          },
+                          text: 'Camera',
+                          icon: Icon(
+                            Icons.camera,
+                            color: Colors.white,
+                          ),
+                          linearGradient: AppColors.linearGradient,
                         ),
-                        linearGradient: AppColors.linearGradient,
                       ),
-                    ),
-                    Container(
-                      width: devWidth * 0.5,
-                      child: KButton(
-                        onPressed: () async {
-                          File imageFile = await _camService.getImage(
-                            ImageSource.gallery,
-                          );
-                          if (imageFile != null) {
-                            initializeVision(imageFile);
-                          }
-                          setState(() {
-                            arcImage = imageFile;
-                          });
-                          Navigator.pop(context);
-                        },
-                        text: 'Gallery',
-                        icon: Icon(
-                          Icons.image,
-                          color: Colors.white,
+                      Container(
+                        width: devWidth * 0.5,
+                        child: KButton(
+                          onPressed: () async {
+                            File imageFile = await _camService.getImage(
+                              ImageSource.gallery,
+                            );
+                            if (imageFile != null) {
+                              initializeVision(imageFile);
+                            }
+                            setState(() {
+                              arcImage = imageFile;
+                            });
+                            Navigator.pop(context);
+                          },
+                          text: 'Gallery',
+                          icon: Icon(
+                            Icons.image,
+                            color: Colors.white,
+                          ),
+                          linearGradient: AppColors.linearGradient,
                         ),
-                        linearGradient: AppColors.linearGradient,
                       ),
-                    ),
-                  ],
-                )),
+                    ],
+                  )),
+            ),
           );
         });
   }
@@ -1016,60 +1019,63 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
     showModalBottomSheet(
         context: context,
         builder: (builder) {
-          return new Container(
-            height: devHeight * 0.2,
-            width: devWidth,
-            color: Colors.transparent,
+          return Theme(
+            data: Theme.of(context).copyWith(canvasColor: Colors.transparent),
             child: new Container(
-                margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                decoration: new BoxDecoration(
-                    color: AppColors.backgroundColor,
-                    borderRadius: BorderRadius.circular(20)),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Container(
-                      width: devWidth * 0.5,
-                      child: KButton(
-                        onPressed: () async {
-                          File imageFile =
-                              await _camService.getImage(ImageSource.camera);
-                          setState(() {
-                            personImage = imageFile;
-                          });
-                          Navigator.pop(context);
-                        },
-                        text: 'Camera',
-                        icon: Icon(
-                          Icons.camera,
-                          color: Colors.white,
+              height: devHeight * 0.2,
+              width: devWidth,
+              color: Colors.transparent,
+              child: new Container(
+                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  decoration: new BoxDecoration(
+                      color: AppColors.backgroundColor,
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Container(
+                        width: devWidth * 0.5,
+                        child: KButton(
+                          onPressed: () async {
+                            File imageFile =
+                                await _camService.getImage(ImageSource.camera);
+                            setState(() {
+                              personImage = imageFile;
+                            });
+                            Navigator.pop(context);
+                          },
+                          text: 'Camera',
+                          icon: Icon(
+                            Icons.camera,
+                            color: Colors.white,
+                          ),
+                          linearGradient: AppColors.linearGradient,
                         ),
-                        linearGradient: AppColors.linearGradient,
                       ),
-                    ),
-                    Container(
-                      width: devWidth * 0.5,
-                      child: KButton(
-                        onPressed: () async {
-                          File imageFile =
-                              await _camService.getImage(ImageSource.gallery);
-                          setState(() {
-                            personImage = imageFile;
-                          });
-                          Navigator.pop(context);
-                        },
-                        text: 'Gallery',
-                        icon: Icon(
-                          Icons.image,
-                          color: Colors.white,
+                      Container(
+                        width: devWidth * 0.5,
+                        child: KButton(
+                          onPressed: () async {
+                            File imageFile =
+                                await _camService.getImage(ImageSource.gallery);
+                            setState(() {
+                              personImage = imageFile;
+                            });
+                            Navigator.pop(context);
+                          },
+                          text: 'Gallery',
+                          icon: Icon(
+                            Icons.image,
+                            color: Colors.white,
+                          ),
+                          linearGradient: AppColors.linearGradient,
                         ),
-                        linearGradient: AppColors.linearGradient,
                       ),
-                    ),
-                  ],
-                )),
+                    ],
+                  )),
+            ),
           );
         });
   }
