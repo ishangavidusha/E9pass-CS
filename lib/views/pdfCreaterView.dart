@@ -885,7 +885,7 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
     final FirebaseVisionImage visionImage = FirebaseVisionImage.fromFile(imageToRead);
     final TextRecognizer textRecognizer = FirebaseVision.instance.textRecognizer();
     final VisionText visionText = await textRecognizer.processImage(visionImage);
-    String arcNumPattern = r"[7-9][0-9][0-1][0-9][0-3][0-9]-[5-6][0-9]{6}";
+    String arcNumPattern = r"[0-9][0-9][0-1][0-9][0-3][0-9]-[5-6][0-9]{6}";
     String namePattern = r"[a-zA-Z -]+";
     String arcRemovePattern = r"ALIEN|REGISTRATION|CARD|KOR";
     RegExp regExArc = RegExp(arcNumPattern);
