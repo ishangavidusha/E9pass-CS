@@ -149,10 +149,16 @@ class _SettingsViewState extends State<SettingsView> {
                                   desc: 'Settings Saved',
                                   btnOkText: 'Done',
                                   btnOkOnPress: () {
-                                    // pop
+                                    getCurrentValue();
+                                    setState(() {
+                                      print(currentValue.sheetUrl);
+                                    });
                                   },
                                   onDissmissCallback: () {
-
+                                    getCurrentValue();
+                                    setState(() {
+                                      print(currentValue.sheetUrl);
+                                    });
                                   }
                                 )..show();
                               } else {
@@ -202,7 +208,7 @@ class _SettingsViewState extends State<SettingsView> {
                                 dialogType: DialogType.ERROR,
                                 animType: AnimType.BOTTOMSLIDE,
                                 title: 'Faild',
-                                desc: 'URL not found. Set Url first',
+                                desc: 'Country Not Selected',
                                 btnOkText: 'Done',
                                 btnOkOnPress: () {
                                   // pop
@@ -235,7 +241,7 @@ class _SettingsViewState extends State<SettingsView> {
                                   dialogType: DialogType.ERROR,
                                   animType: AnimType.BOTTOMSLIDE,
                                   title: 'Faild',
-                                  desc: 'Faild to set Upload',
+                                  desc: 'Faild to Change Upload State',
                                   btnOkText: 'Done',
                                   btnOkOnPress: () {
                                     // pop
