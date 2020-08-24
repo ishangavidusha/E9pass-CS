@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:e9pass_cs/repository/authService.dart';
 import 'package:e9pass_cs/repository/driveService.dart';
 import 'package:e9pass_cs/widget/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fullpdfview/flutter_fullpdfview.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 class PdfView extends StatefulWidget {
@@ -93,27 +93,20 @@ class _PdfViewState extends State<PdfView> {
           ),
         ],
       ),
-      // floatingActionButton: FutureBuilder<PDFViewController>(
-      //   future: _controller.future,
-      //   builder: (context, AsyncSnapshot<PDFViewController> snapshot) {
-      //     if (snapshot.hasData) {
-      //       return FloatingActionButton(
-      //         onPressed: () async {
-      //           if (authService.currentUser != null) {
-      //             setState(() {
-      //               loading = true;
-      //             });
-      //             await driveService.uploadFileToGoogleDrive(authService, widget.file);
-      //             setState(() {
-      //               loading = false;
-      //             });
-      //           }
-      //         },
-      //       );
-      //     }
-      //     return Container();
-      //   },
-      // ),
+      floatingActionButton: FutureBuilder<PDFViewController>(
+        future: _controller.future,
+        builder: (context, AsyncSnapshot<PDFViewController> snapshot) {
+          if (snapshot.hasData) {
+            return FloatingActionButton(
+              child: Icon(Icons.print),
+              onPressed: () async {
+                Printing.layoutPdf(onLayout: (_) => widget.file.readAsBytesSync(), name: title.last);
+              },
+            );
+          }
+          return Container();
+        },
+      ),
     );
   }
 }

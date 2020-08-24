@@ -17,7 +17,6 @@ class DataRepository extends ChangeNotifier {
         appData.add(AppData.fromJson(documentSnapshot.data));
       })
     });
-    print(appData.length);
     update(shouldUpdate);
     return appData;
   }

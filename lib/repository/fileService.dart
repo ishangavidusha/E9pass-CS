@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:e9pass_cs/util/filrUtil.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:ext_storage/ext_storage.dart';
@@ -20,10 +22,8 @@ class FileService {
 
   Future<bool> saveImageToDownload(File imageFile, String fileName) async {
     try {
-      String folderPath = await _getPath();
-      File file = File("$folderPath/$fileName.jpg");
       if (await Permission.storage.request().isGranted) {
-        file.writeAsBytesSync(imageFile.readAsBytesSync());
+        await ImageGallerySaver.saveImage(imageFile.readAsBytesSync(), name: fileName);
       }
       return true;
     } catch (error) {
@@ -33,10 +33,14 @@ class FileService {
 
   Future<bool> savePdfLocale(pw.Document pdfFile, String fileName) async {
     try {
-      String pdfPath = await _getPath();
-      File file = File("$pdfPath/$fileName.pdf");
       if (await Permission.storage.request().isGranted) {
-        file.writeAsBytesSync(pdfFile.save());
+        String appPath = await _getPath();
+        String pdfPath = '$appPath/PDF Files';
+        File file = File("$pdfPath/$fileName.pdf");
+        if (!await Directory(pdfPath).exists()) {
+          await Directory(pdfPath).create(recursive: true); 
+        }
+        await file.writeAsBytes(pdfFile.save());
       }
       return true;
     } catch (error) {
@@ -53,8 +57,6 @@ class FileService {
   }
 
   Future<String> _getPath() {
-    return ExtStorage.getExternalStoragePublicDirectory(
-      ExtStorage.DIRECTORY_DOWNLOADS,
-    );
+    return ExtStorage.getExternalStoragePublicDirectory('E9pass CS');
   }
 }

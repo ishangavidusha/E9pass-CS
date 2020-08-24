@@ -39,14 +39,51 @@ class _SplashScreenState extends State<SplashScreen> {
             builder: (BuildContext context, AsyncSnapshot<List<AppData>> snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(
-                  child: CircularProgressIndicator(),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Text(
+                        'Fatching Data...',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               } else if (snapshot.hasError || !snapshot.hasData || snapshot.data.length < 1) {
                 return Center(
-                  child: Text('Error Fatching Data!'),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Error Fatching Data!',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[700],
+                        ),
+                      ),
+                      Text(
+                        'Check your Internet Conection',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[400],
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               } else {
-                print(snapshot.data.length);
                 return HomeScreen();
               }
             },

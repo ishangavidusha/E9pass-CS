@@ -55,6 +55,8 @@ dependencies:
   googleapis_auth: ^0.2.12
   firebase_core: ^0.4.0+9
   cloud_firestore: ^0.12.9+5
+  image_gallery_saver: '^1.5.0'
+  printing: ^3.6.0
 
 dev_dependencies:
   flutter_test:

@@ -69,7 +69,7 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
       }
       return {"state": true, "msg": 'Done'};
     } catch (error) {
-      return {"state": false, "msg": error};
+      return {"state": false, "msg": error.toString()};
     }
   }
 
@@ -447,6 +447,9 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
                     text: 'Scan Application Number',
                     onPressed: () {
                       getQrResult();
+                      // setState(() {
+                      //   appNumber = '2020-test-new';
+                      // });
                     },
                     icon: Icon(
                       Icons.scanner,
@@ -944,6 +947,7 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
 
   void getArcImage(double devHeight, double devWidth) {
     showModalBottomSheet(
+        backgroundColor: Colors.transparent,
         context: context,
         builder: (builder) {
           return Theme(
@@ -1017,6 +1021,7 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
 
   void getPersonImage(double devHeight, double devWidth) {
     showModalBottomSheet(
+        backgroundColor: Colors.transparent,
         context: context,
         builder: (builder) {
           return Theme(

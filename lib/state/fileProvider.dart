@@ -18,8 +18,8 @@ class FileProvider extends ChangeNotifier {
       // downloadTabs.add("All");
       List<Directory> storages = await FileUtils.getStorageList();
       storages.forEach((dir) {
-        if (Directory(dir.path + "Download").existsSync()) {
-          List<FileSystemEntity> files = Directory(dir.path + "Download").listSync();
+        if (Directory(dir.path + "E9pass CS/PDF Files").existsSync()) {
+          List<FileSystemEntity> files = Directory(dir.path + "E9pass CS/PDF Files").listSync();
           files.forEach((file) {
             if (FileSystemEntity.isFileSync(file.path)) {
               if (mime(file.path) == 'application/pdf') {

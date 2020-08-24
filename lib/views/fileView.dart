@@ -49,17 +49,21 @@ class _DownloadsState extends State<Downloads> {
     if (authService?.currentUser != null) {
       await drivService.init(authService);
       List<String> result = await drivService.getAllPdfs();
-      setState(() {
-        driveFiles = result;
-        syncing = false;
-        uploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          driveFiles = result;
+          syncing = false;
+          uploading = false;
+        });
+      }
     } else {
-      setState(() {
-        driveFiles = null;
-        syncing = false;
-        uploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          driveFiles = null;
+          syncing = false;
+          uploading = false;
+        });
+      }
     }
   }
 
