@@ -57,6 +57,7 @@ dependencies:
   cloud_firestore: ^0.12.9+5
   image_gallery_saver: '^1.5.0'
   printing: ^3.6.0
+  gsheets: ^0.2.5
 
 dev_dependencies:
   flutter_test:

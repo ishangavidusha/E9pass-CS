@@ -1,10 +1,14 @@
 import 'dart:ui';
 
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:e9pass_cs/repository/authService.dart';
+import 'package:e9pass_cs/state/settingsProvider.dart';
+import 'package:e9pass_cs/views/e9passAppNo.dart';
 import 'package:e9pass_cs/views/fileView.dart';
 import 'package:e9pass_cs/views/pdfCreaterView.dart';
 import 'package:e9pass_cs/views/settingsView.dart';
 import 'package:e9pass_cs/widget/colors.dart';
+import 'package:e9pass_cs/widget/customButton.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool showTitleBar = false;
   double topBarOpacity = 0.0;
   AuthService authService;
+  SettingsProvider _settingsProvider;
+  
 
   @override
   void initState() {
@@ -64,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
     double devWidth = MediaQuery.of(context).size.width;
     double devHeight = MediaQuery.of(context).size.height;
     authService = Provider.of<AuthService>(context);
+    _settingsProvider = Provider.of<SettingsProvider>(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -102,6 +109,53 @@ class _HomeScreenState extends State<HomeScreen> {
                   image: 'assets/images/pdf.png',
                   mainText: 'View',
                   subText: 'List All PDF Files',
+                ),
+                CardButton(
+                  onTap: () async {
+                    String sheetId = await _settingsProvider.getSheetId('sheetId');
+                    if (sheetId != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => E9passNumberUpload(sheetId: sheetId,))
+                      );
+                    } else {
+                      AwesomeDialog(
+                        context: context,
+                        dialogType: DialogType.ERROR,
+                        animType: AnimType.BOTTOMSLIDE,
+                        title: 'Sheet ID Not Found',
+                        desc: 'Pleace Add Google Sheet ID',
+                        btnOkText: 'Dismiss',
+                        btnOkOnPress: () {
+                          
+                        },
+                        onDissmissCallback: () {}
+                        
+                      ).show();
+                    }
+                  },
+                  image: 'assets/images/pdf.png',
+                  mainText: 'Check Application',
+                  subText: 'From Google Sheet',
+                ),
+                CardButton(
+                  onTap: () async {
+                    String sheetId = await _settingsProvider.getSheetId('sheetId');
+                    if (sheetId == null) {
+                      String value = await newSheetId(context, '');
+                      if (value != null && value.length > 0) {
+                        await _settingsProvider.setSheetid('sheetId', value);
+                      }
+                    } else {
+                      String value = await newSheetId(context, sheetId);
+                      if (value != null && value.length > 0) {
+                        await _settingsProvider.setSheetid('sheetId', value);
+                      }
+                    }
+                  },
+                  image: 'assets/images/add.png',
+                  mainText: 'Add or Change',
+                  subText: 'Google Sheet ID',
                 ),
               ],
             ),
@@ -282,6 +336,98 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+Future<String> newSheetId(BuildContext context, String oldId) async {
+  String newSheetIdNumber;
+  TextEditingController textEditingController = TextEditingController()..text = oldId;
+  return await showModalBottomSheet(
+    isDismissible: true,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    context: context,
+    builder: (context) {
+      return SingleChildScrollView(
+        child: Container(
+          margin: EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10)
+          ),
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text(
+                  'Add Sheet ID',
+                  style: GoogleFonts.roboto(
+                    textStyle: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.mainTextColor,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(20.0),
+                child: TextField(
+                  toolbarOptions: ToolbarOptions(paste: true, copy: true, selectAll: true, cut: true),
+                  controller: textEditingController,
+                  textCapitalization: TextCapitalization.none,
+                  keyboardType: TextInputType.text,
+                  autofocus: false,
+                  decoration: InputDecoration(
+                    labelText: 'Google Sheet ID',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    labelStyle: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  textInputAction: TextInputAction.done,
+                  onChanged: (value) {
+                    newSheetIdNumber = value;
+                  },
+                  onSubmitted: (value) {
+                    newSheetIdNumber = value;
+                  },
+                ),
+              ),
+              Spacer(),
+              Center(
+                child: KButton(
+                  text: 'Submit',
+                  onPressed: () {
+                    Navigator.of(context).pop(newSheetIdNumber);
+                  },
+                  icon: Icon(
+                    Icons.donut_large,
+                    color: Colors.white,
+                  ),
+                  linearGradient: LinearGradient(
+                    colors: [
+                      Color(0xFF1D73FF),
+                      Color(0xFF438AFE),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 20,
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
 class CardButton extends StatelessWidget {
   final Function onTap;
   final String image;
@@ -314,9 +460,10 @@ class CardButton extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(10),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Container(
+                padding: EdgeInsets.only(left: 10),
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
@@ -333,7 +480,7 @@ class CardButton extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -360,6 +507,7 @@ class CardButton extends StatelessWidget {
                   ],
                 ),
               ),
+              Spacer(),
               Padding(
                 padding: const EdgeInsets.all(10),
                 child: Icon(Icons.arrow_forward_ios, color: Colors.white,)

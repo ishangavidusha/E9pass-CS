@@ -29,12 +29,12 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
   Animation<double> topBarAnimation;
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  SheetService sheetService = SheetService();
   TextEditingController arcController;
   TextEditingController nameController;
   CamService _camService = CamService();
   PdfFactory _pdfFactory = PdfFactory();
   FileService _fileService = FileService();
-  SheetService _sheetService = SheetService();
   bool showTitleBar = false;
   double topBarOpacity = 0.0;
   pw.Document pdf;
@@ -73,19 +73,14 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
     }
   }
 
-  Future<bool> sheetUpload(String sheetUrl) async {
+  Future<bool> sheetUpload(String sheetId) async {
     SheetModel sheetModel = SheetModel(
         name: name ?? 'null',
         applicationNumber: appNumber ?? 'null',
         arcNumber: arcNumber ?? 'null',
         phoneNumber: phoneNumber ?? 'null');
     try {
-      String result = await _sheetService.submitData(sheetModel, sheetUrl);
-      if (result == "SUCCESS") {
-        return true;
-      } else {
-        return false;
-      }
+      return await sheetService.addPdfData(sheetModel, sheetId);
     } catch (error) {
       print(error);
     }
@@ -522,8 +517,7 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
                               saving = true;
                             });
                             if (isSwitched) {
-                              appSettings = await settingsProvider
-                                  .getSettings('settings');
+                              appSettings = await settingsProvider.getSettings('settings');
                               if (appSettings.sheetUrl != null &&
                                   appSettings.sheetUrl.length > 0) {
                                 bool result =
@@ -708,37 +702,37 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
           ),
           saving
               ? Container(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: 6.0,
-                    sigmaY: 6.0,
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: devWidth * 0.4,
-                      height: devWidth * 0.3,
-                      child: Column(
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(
-                            height: 10,
-                          ),
-                          Text(
-                            'Uploading...',
-                            style: GoogleFonts.roboto(
-                              textStyle: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
-                              ),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(
+                      sigmaX: 6.0,
+                      sigmaY: 6.0,
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: devWidth * 0.4,
+                        height: devWidth * 0.3,
+                        child: Column(
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(
+                              height: 10,
                             ),
-                          )
-                        ],
+                            Text(
+                              'Uploading...',
+                              style: GoogleFonts.roboto(
+                                textStyle: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              )
+                )
               : Container(),
         ],
       ),
@@ -785,13 +779,17 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
       textCapitalization: TextCapitalization.none,
       keyboardType: TextInputType.text,
       decoration: InputDecoration(
-          labelText: 'ARC Number',
-          hintText: '920802-XXXXXXX',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          labelStyle: TextStyle(
-              color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+        labelText: 'ARC Number',
+        hintText: '920802-XXXXXXX',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+        labelStyle: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       textInputAction: TextInputAction.done,
       validator: (value) {
         if (value == null || value == '') {
@@ -885,9 +883,12 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
     // if (imageToRead != null) {
     //   await getImageSize(imageToRead);
     // }
-    final FirebaseVisionImage visionImage = FirebaseVisionImage.fromFile(imageToRead);
-    final TextRecognizer textRecognizer = FirebaseVision.instance.textRecognizer();
-    final VisionText visionText = await textRecognizer.processImage(visionImage);
+    final FirebaseVisionImage visionImage =
+        FirebaseVisionImage.fromFile(imageToRead);
+    final TextRecognizer textRecognizer =
+        FirebaseVision.instance.textRecognizer();
+    final VisionText visionText =
+        await textRecognizer.processImage(visionImage);
     String arcNumPattern = r"[0-9][0-9][0-1][0-9][0-3][0-9]-[5-6][0-9]{6}";
     String namePattern = r"[a-zA-Z -]+";
     String arcRemovePattern = r"ALIEN|REGISTRATION|CARD|KOR";
@@ -906,21 +907,25 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
           // print(match.group(0));
           visionArcNumber = match.group(0);
         }
-        if (regExName.hasMatch(line.text) && !regExArcRemove.hasMatch(line.text)) {
+        if (regExName.hasMatch(line.text) &&
+            !regExArcRemove.hasMatch(line.text)) {
           RegExpMatch match = regExName.firstMatch(line.text);
           nameList.add(match.group(0));
         }
       }
     }
     if (nameList.length >= 4) {
-      for (String name in nameList){
-        if (name.length > 12){
+      for (String name in nameList) {
+        if (name.length > 12) {
           int index = nameList.indexOf(name);
-          String lastElement = nameList[index].substring(nameList[index].length - 1, nameList[index].length);
+          String lastElement = nameList[index]
+              .substring(nameList[index].length - 1, nameList[index].length);
           if (lastElement == '-') {
-            fullName = nameList[index].substring(0, nameList[index].length - 1) + nameList[index+1];
+            fullName =
+                nameList[index].substring(0, nameList[index].length - 1) +
+                    nameList[index + 1];
           } else {
-            fullName = nameList[index] + ' ' + nameList[index+1];
+            fullName = nameList[index] + ' ' + nameList[index + 1];
           }
           break;
         }
@@ -938,8 +943,13 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
       setState(() {
         arcController.text = visionArcNumber;
         arcNumber = visionArcNumber;
-        nameController.text = corectedFullName != null && corectedFullName.length > 0 ? corectedFullName : null;
-        name = corectedFullName != null && corectedFullName.length > 0 ? corectedFullName : null;
+        nameController.text =
+            corectedFullName != null && corectedFullName.length > 0
+                ? corectedFullName
+                : null;
+        name = corectedFullName != null && corectedFullName.length > 0
+            ? corectedFullName
+            : null;
       });
       textRecognizer.close();
     }
