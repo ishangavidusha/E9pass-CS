@@ -30,11 +30,15 @@ class SheetService {
       List data = await worksheet.values.allRows();
       int found =  data.indexWhere((element) => element[0] == applicationNumber);
       if (found != -1) {
-        bool result = await worksheet.values.insertValue(true, column: 2, row: found + 1);
-        if (result) {
-          return {'found': true, 'update' : true, 'msg' : 'Found & Updated'};
+        if (data[found][1] == 'true') {
+          return {'found': true, 'update' : false, 'msg' : 'This Number Already Checked'};
         } else {
-          return {'found': true, 'update' : false, 'msg' : 'Found But Not Updated'};
+          bool result = await worksheet.values.insertValue(true, column: 2, row: found + 1);
+          if (result) {
+            return {'found': true, 'update' : true, 'msg' : 'Found & Checked'};
+          } else {
+            return {'found': true, 'update' : false, 'msg' : 'Found But Faild Checked'};
+          }
         }
       } else {
         print('Not Found');

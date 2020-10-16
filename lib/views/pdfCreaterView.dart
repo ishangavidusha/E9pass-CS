@@ -18,6 +18,7 @@ import 'package:e9pass_cs/widget/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:tflite/tflite.dart';
 
 class PDFCreaterView extends StatefulWidget {
   @override
@@ -51,6 +52,24 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
   bool isSwitched;
   Size _imageSize;
   String recognizedText = "Loading ...";
+  bool modelLoading = false;
+
+  loadModel() async {
+    await Tflite.loadModel(
+      model: "assets/model_unquant.tflite",
+      labels: "assets/labels.txt",
+    );
+  }
+
+  Future<List<dynamic>> classifyImage(File image) async {
+    return await Tflite.runModelOnImage(
+      path: image.path,
+      numResults: 2,
+      threshold: 0.5,
+      imageMean: 127.5,
+      imageStd: 127.5,
+    );
+  }
 
   Future<Map<String, dynamic>> savePdfAndPhotos() async {
     try {
@@ -110,6 +129,13 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
     _scrollController.addListener(scroollListener);
     settingsProvider ??= Provider.of<SettingsProvider>(context, listen: false);
     settingsProvider.getSettings('settings');
+    modelLoading = true;
+    loadModel().then((value) {
+      setState(() {
+        print('Model Loaded!');
+        modelLoading = false;
+      });
+    });
     super.initState();
   }
 
@@ -141,6 +167,7 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
   @override
   void dispose() {
     _scrollController.dispose();
+    Tflite.close();
     super.dispose();
   }
 
@@ -261,12 +288,37 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
                   padding: EdgeInsets.symmetric(vertical: 20, horizontal: 40),
                   child: KButton(
                     text: 'ARC / Passport',
-                    onPressed: () {
+                    onPressed: () async {
                       arcController.clear();
                       nameController.clear();
                       arcNumber = null;
                       name = null;
-                      getArcImage(devHeight, devWidth);
+                      if (!modelLoading) {
+                        bool isPassport = await getArcImage(devHeight, devWidth);
+                        if (isPassport) {
+                          AwesomeDialog(
+                            context: context,
+                            dialogType: DialogType.WARNING,
+                            animType: AnimType.BOTTOMSLIDE,
+                            title: 'Warning',
+                            desc: 'Look like the photo you took is passport! It\'s recommend to use ARC image for E9pass',
+                            btnCancelText: 'Dismiss',
+                            btnCancelOnPress: () {},
+                            onDissmissCallback: () {})
+                          ..show();
+                        }
+                      } else {
+                        AwesomeDialog(
+                          context: context,
+                          dialogType: DialogType.INFO,
+                          animType: AnimType.BOTTOMSLIDE,
+                          title: 'Wait',
+                          desc: 'TensorFlow Image Model is not loaded yet!',
+                          btnOkText: 'OK',
+                          btnOkOnPress: () {},
+                          onDissmissCallback: () {})
+                        ..show();
+                      }
                     },
                     icon: Icon(
                       Icons.camera,
@@ -930,12 +982,14 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
           break;
         }
       }
-      for (String i in fullName.split('')) {
-        // print(i);
-        if (i == 'l') {
-          corectedFullName += 'I';
-        } else {
-          corectedFullName += i;
+      if (fullName != null) {
+        for (String i in fullName.split('')) {
+          // print(i);
+          if (i == 'l') {
+            corectedFullName += 'I';
+          } else {
+            corectedFullName += i;
+          }
         }
       }
     }
@@ -955,8 +1009,9 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
     }
   }
 
-  void getArcImage(double devHeight, double devWidth) {
-    showModalBottomSheet(
+  Future<bool> getArcImage(double devHeight, double devWidth) {
+    bool isPassport = false;
+    return showModalBottomSheet(
         backgroundColor: Colors.transparent,
         context: context,
         builder: (builder) {
@@ -984,12 +1039,18 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
                               ImageSource.camera,
                             );
                             if (imageFile != null) {
-                              initializeVision(imageFile);
+                              List<dynamic> result = await classifyImage(imageFile);
+                              print(result[0]["label"]);
+                              if (result != null && result[0]["label"] == '1 ID Card') {
+                                initializeVision(imageFile);
+                              } else {
+                                isPassport = true;
+                              }
                             }
                             setState(() {
                               arcImage = imageFile;
                             });
-                            Navigator.pop(context);
+                            Navigator.pop(context, isPassport);
                           },
                           text: 'Camera',
                           icon: Icon(
@@ -1007,12 +1068,18 @@ class _PDFCreaterViewState extends State<PDFCreaterView> {
                               ImageSource.gallery,
                             );
                             if (imageFile != null) {
-                              initializeVision(imageFile);
+                              List<dynamic> result = await classifyImage(imageFile);
+                              print(result[0]["label"]);
+                              if (result != null && result[0]["label"] == '1 ID Card') {
+                                initializeVision(imageFile);
+                              } else {
+                                isPassport = true;
+                              }
                             }
                             setState(() {
                               arcImage = imageFile;
                             });
-                            Navigator.pop(context);
+                            Navigator.pop(context, isPassport);
                           },
                           text: 'Gallery',
                           icon: Icon(

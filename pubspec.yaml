@@ -58,6 +58,7 @@ dependencies:
   image_gallery_saver: '^1.5.0'
   printing: ^3.6.0
   gsheets: ^0.2.5
+  tflite: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -93,6 +94,7 @@ flutter:
     - assets/images/add.png
     - assets/images/pdf.png
     - assets/images/settings.png
+    - assets/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

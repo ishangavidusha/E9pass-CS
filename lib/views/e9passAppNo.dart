@@ -30,7 +30,7 @@ class _E9passNumberUploadState extends State<E9passNumberUpload> {
     if (cameraScanResult != null && cameraScanResult.length > 2) {
       return cameraScanResult;
     } else {
-      return null;
+      return '200924-5339-0297';
     }
   }
 
@@ -212,7 +212,7 @@ class _E9passNumberUploadState extends State<E9passNumberUpload> {
                         height: 10,
                       ),
                       Text(
-                        update ? 'Successfully Updated' : 'Failed to update',
+                        update ? 'Successfully Chacked' : 'Failed to Chacked',
                         style: GoogleFonts.roboto(
                           textStyle: TextStyle(
                             fontSize: 16,
@@ -224,7 +224,7 @@ class _E9passNumberUploadState extends State<E9passNumberUpload> {
                       Divider(),
                       Text(
                         msg,
-                        style: GoogleFonts.pacifico(
+                        style: GoogleFonts.solway(
                           textStyle: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -236,7 +236,7 @@ class _E9passNumberUploadState extends State<E9passNumberUpload> {
                   ) : Container(
                     child: Text(
                       'Ready For Scan',
-                      style: GoogleFonts.pacifico(
+                      style: GoogleFonts.solway(
                         textStyle: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
