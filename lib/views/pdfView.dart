@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:e9pass_cs/repository/authService.dart';
-import 'package:e9pass_cs/repository/driveService.dart';
 import 'package:e9pass_cs/widget/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fullpdfview/flutter_fullpdfview.dart';
+import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
@@ -17,7 +17,6 @@ class PdfView extends StatefulWidget {
 }
 
 class _PdfViewState extends State<PdfView> {
-  DriveService driveService = DriveService();
   int pages = 0;
   bool isReady = false;
   String errorMessage = '';
@@ -100,7 +99,7 @@ class _PdfViewState extends State<PdfView> {
             return FloatingActionButton(
               child: Icon(Icons.print),
               onPressed: () async {
-                Printing.layoutPdf(onLayout: (_) => widget.file.readAsBytesSync(), name: title.last);
+                Printing.layoutPdf(onLayout: (_) => widget.file.readAsBytesSync(), name: title.last, format: PdfPageFormat.a4);
               },
             );
           }

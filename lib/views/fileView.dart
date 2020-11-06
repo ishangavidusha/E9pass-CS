@@ -3,15 +3,15 @@ import 'dart:ui';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:e9pass_cs/models/drivrResponse.dart';
 import 'package:e9pass_cs/repository/authService.dart';
-import 'package:e9pass_cs/repository/driveService.dart';
 import 'package:e9pass_cs/state/fileProvider.dart';
 import 'package:e9pass_cs/util/filrUtil.dart';
 import 'package:e9pass_cs/views/pdfView.dart';
 import 'package:e9pass_cs/widget/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
+import 'package:share/share.dart';
 
 class Downloads extends StatefulWidget {
   final String title;
@@ -28,7 +28,6 @@ class Downloads extends StatefulWidget {
 class _DownloadsState extends State<Downloads> {
   FileProvider fileProvider;
   AuthService authService;
-  DriveService drivService = DriveService();
   List<String> driveFiles;
   bool syncing = false;
   bool uploading = false;
@@ -39,39 +38,6 @@ class _DownloadsState extends State<Downloads> {
     super.didChangeDependencies();
   }
 
-  void getAllData({bool init = false}) async {
-    setState(() {
-      syncing = true;
-    });
-    if (init) {
-      await Future.delayed(Duration(seconds: 2));
-    }
-    if (authService?.currentUser != null) {
-      await drivService.init(authService);
-      List<String> result = await drivService.getAllPdfs();
-      if (mounted) {
-        setState(() {
-          driveFiles = result;
-          syncing = false;
-          uploading = false;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          driveFiles = null;
-          syncing = false;
-          uploading = false;
-        });
-      }
-    }
-  }
-
-  @override
-  void initState() {
-    getAllData(init: true);
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,67 +89,10 @@ class _DownloadsState extends State<Downloads> {
                               itemBuilder: (BuildContext context, int index) {
                                 return FileItem(
                                   file: provider.downloads[index],
-                                  upload: () async {
-                                    if (authService.currentUser != null) {
-                                      setState(() {
-                                        uploading = true;
-                                      });
-                                      try {
-                                        GoogleDriveUploadResponse myResponse = await drivService.uploadFileToGoogleDrive(provider.downloads[index]);
-                                        setState(() {
-                                          uploading = false;
-                                        });
-                                        if (myResponse.result) {
-                                          AwesomeDialog(
-                                            context: context,
-                                            dialogType: DialogType.SUCCES,
-                                            animType: AnimType.BOTTOMSLIDE,
-                                            title: 'Done',
-                                            desc: 'File Successfully Uploaded',
-                                            btnOkText: 'OK',
-                                            btnOkOnPress: () {
-                                              getAllData();
-                                            },
-                                            onDissmissCallback: () {
-                                              getAllData();
-                                            }
-                                          )..show();
-                                        } else {
-                                          AwesomeDialog(
-                                            context: context,
-                                            dialogType: DialogType.ERROR,
-                                            animType: AnimType.BOTTOMSLIDE,
-                                            title: 'Error',
-                                            desc: myResponse.message,
-                                            btnOkText: 'OK',
-                                            btnOkOnPress: () {
-                                              getAllData();
-                                            },
-                                            onDissmissCallback: () {
-                                              getAllData();
-                                            }
-                                          )..show();
-                                        }
-                                      } catch (error) {
-                                        print(error.toString());
-                                        AwesomeDialog(
-                                          context: context,
-                                          dialogType: DialogType.ERROR,
-                                          animType: AnimType.BOTTOMSLIDE,
-                                          title: 'Error',
-                                          desc: error.toString(),
-                                          btnOkText: 'OK',
-                                          btnOkOnPress: () {
-                                            getAllData();
-                                          },
-                                          onDissmissCallback: () {
-                                            getAllData();
-                                          }
-                                        )..show();
-                                      }
-                                    }
+                                  onShare: () async {
+                                    Share.shareFiles([provider.downloads[index].path], text: p.basename(provider.downloads[index].path).split('.').first, subject: 'E9PASS PDF');
                                   },
-                                  contain: driveFiles != null ? driveFiles.contains(basename(provider.downloads[index].path)) : null,
+                                  contain: driveFiles != null ? driveFiles.contains(p.basename(provider.downloads[index].path)) : null,
                                 );
                               },
                               separatorBuilder: (BuildContext context, int index) {
@@ -371,13 +280,13 @@ class _DownloadsState extends State<Downloads> {
 
 class FileItem extends StatelessWidget {
   final FileSystemEntity file;
-  final Function upload;
+  final Function onShare;
   final bool contain;
 
   FileItem({
     Key key,
     @required this.file,
-    @required this.upload, this.contain,
+    @required this.onShare, this.contain,
   }) : super(key: key);
 
   @override
@@ -392,7 +301,7 @@ class FileItem extends StatelessWidget {
       contentPadding: EdgeInsets.all(0),
       leading: Icon(Icons.picture_as_pdf, color: Colors.amber,),
       title: Text(
-        "${basename(file.path)}",
+        "${p.basename(file.path)}",
         style: TextStyle(
           fontSize: 14,
         ),
@@ -402,15 +311,9 @@ class FileItem extends StatelessWidget {
         "${FileUtils.formatBytes(file == null ? 678476 : File(file.path).lengthSync(), 2)},"
         " ${file == null ? "Test" : FileUtils.formatTime(File(file.path).lastModifiedSync().toIso8601String())}",
       ),
-      trailing: contain == null ? Container(
-        margin: EdgeInsets.all(10),
-        child: Icon(Icons.error_outline, color: Colors.orange,),
-      ) : contain ? IconButton(
-        icon: Icon(Icons.done, color: Colors.green,),
-        onPressed: null,
-      ) : IconButton(
-        icon: Icon(Icons.file_upload, color: Colors.blue,),
-        onPressed: upload,
+      trailing: IconButton(
+        icon: Icon(Icons.share_rounded, color: Colors.blue,),
+        onPressed: onShare,
       ),
     );
   }

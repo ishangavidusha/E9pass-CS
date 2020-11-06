@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:e9pass_cs/util/filrUtil.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -31,7 +30,7 @@ class FileService {
     }
   }
 
-  Future<bool> savePdfLocale(pw.Document pdfFile, String fileName) async {
+  Future<String> savePdfLocale(pw.Document pdfFile, String fileName) async {
     try {
       if (await Permission.storage.request().isGranted) {
         String appPath = await _getPath();
@@ -40,9 +39,10 @@ class FileService {
         if (!await Directory(pdfPath).exists()) {
           await Directory(pdfPath).create(recursive: true); 
         }
-        await file.writeAsBytes(pdfFile.save());
+        file = await file.writeAsBytes(pdfFile.save());
+        return file.path;
       }
-      return true;
+      return null;
     } catch (error) {
       throw error;
     }

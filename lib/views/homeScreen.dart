@@ -92,12 +92,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
+                      MaterialPageRoute(builder: (context) => PDFCreaterView(statement: true,))
+                    );
+                  },
+                  image: 'assets/images/add.png',
+                  mainText: 'Create PDF (동의서)',
+                  subText: 'E9pass PDF File With Statement',
+                ),
+                CardButton(
+                  onTap: () {
+                    Navigator.push(
+                      context,
                       MaterialPageRoute(builder: (context) => PDFCreaterView())
                     );
                   },
                   image: 'assets/images/add.png',
-                  mainText: 'Create',
-                  subText: 'E9pass PDF File',
+                  mainText: 'Create PDF (본인확인)',
+                  subText: 'E9pass PDF File With Person Identification',
                 ),
                 CardButton(
                   onTap: () {
@@ -438,6 +449,7 @@ class CardButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double devWidth = MediaQuery.of(context).size.width;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -479,8 +491,9 @@ class CardButton extends StatelessWidget {
                   width: 40,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                width: devWidth * 0.6,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -488,17 +501,19 @@ class CardButton extends StatelessWidget {
                       mainText,
                       style: GoogleFonts.roboto(
                         textStyle: TextStyle(
-                          fontSize: 18,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                     ),
                     Text(
                       subText,
                       style: GoogleFonts.roboto(
                         textStyle: TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
@@ -509,7 +524,7 @@ class CardButton extends StatelessWidget {
               ),
               Spacer(),
               Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(5),
                 child: Icon(Icons.arrow_forward_ios, color: Colors.white,)
               ),
             ],

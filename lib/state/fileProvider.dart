@@ -32,6 +32,7 @@ class FileProvider extends ChangeNotifier {
           });
         }
       });
+      downloads.sort((a, b) => File(b.path).lastModifiedSync().compareTo(File(a.path).lastModifiedSync()));
       downloadTabs.add("All");
     }
     setLoading(false, shouldUpdate);

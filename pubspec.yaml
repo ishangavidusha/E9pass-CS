@@ -59,6 +59,8 @@ dependencies:
   printing: ^3.6.0
   gsheets: ^0.2.5
   tflite: ^1.1.1
+  share: ^0.6.5+4
+  image: ^2.1.18
 
 dev_dependencies:
   flutter_test:
@@ -91,6 +93,7 @@ flutter:
     - assets/images/correct-round.png
     - assets/images/criss-cross.png
     - assets/fonts/OpenSans-SemiBold.ttf
+    - assets/fonts/GothicA1-Medium.ttf
     - assets/images/add.png
     - assets/images/pdf.png
     - assets/images/settings.png
